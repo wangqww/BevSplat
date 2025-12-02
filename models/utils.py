@@ -1,0 +1,16 @@
+import torch
+
+
+def checkpointed(cls, do=True):
+    """Adapted from the DISK implementation of Michał Tyszkiewicz."""
+    assert issubclass(cls, torch.nn.Module)
+
+    class Checkpointed(cls):
+        def forward(self, *args, **kwargs):
+            super_fwd = super(Checkpointed, self).forward
+            if any((torch.is_tensor(a) and a.requires_grad) for a in args):
+                return torch.utils.checkpoint.checkpoint(super_fwd, *args, **kwargs)
+            else:
+                return super_fwd(*args, **kwargs)
+
+    return Checkpointed if do else cls
