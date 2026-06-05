@@ -1,7 +1,7 @@
 import os
 
 os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
 import torch
 import torch.nn as nn
@@ -986,8 +986,10 @@ if __name__ == '__main__':
     net.to(device)
 
     if args.test:
-        # path = '/data/qiwei/nips25/CVLnet2/ModelsKitti/3DoF/Stage4/lat20.0m_lon20.0m_rot0.0_Nit1_TransV1_geo_Level1_Channels32_16_4_Share_feat32_offset_0.5_confidence_original_GPS_1e-4/model_9.pth'
-        path = '/data/qiwei/nips25/CVLnet2/ModelsKitti/3DoF/Stage1/lat20.0m_lon20.0m_rot10.0_Nit1_TransV1_geo_Level1_Channels32_16_4_Share_feat32_depth/model_9.pth'
+        # without GPS
+        # path = '/data/qiwei/nips25/CVLnet2/ModelsKitti/3DoF/Stage1/lat20.0m_lon20.0m_rot10.0_Nit1_TransV1_geo_Level1_Channels32_16_4_Share_feat32_depth/model_9.pth'
+        # with GPS
+        path = '/data/qiwei/nips25/CVLnet2/ModelsKitti/3DoF/Stage1/lat20.0m_lon20.0m_rot10.0_Nit1_TransV1_geo_Level1_Channels32_16_4_GPSerror5_Coe1.0_Share_feat32_depth_GPS/model_9.pth'
         net.load_state_dict(torch.load(path), strict=False)
         print("resume from " + path)
         # test1(net, args, save_path, epoch=2)

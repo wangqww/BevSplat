@@ -1,6 +1,6 @@
 import os
 os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
-os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 
 import torch
 import torch.nn as nn
@@ -717,8 +717,8 @@ if __name__ == '__main__':
         ### cross path
         # path = '/data/qiwei/nips25/CVLnet2/ModelsVIGOR/2DoF/cross_rot0.0_geo_6.5e-05_Level1_Channels32_16_4_ConfGrd_Weakly_vigor_1.0_70_6.5e-5/model_7.pth'
         # path ='/data/qiwei/nips25/CVLnet2/ModelsVIGOR/2DoF/cross_rot0.0_geo_0.000125_Level1_Channels32_16_4_ConfGrd_Weakly_vigor_1.25_GPS/model_14.pth'
-        path = save_path + '/model_7.pth'
-        net.load_state_dict(torch.load(path), strict=False)
+        path = save_path + '/model_14.pth'
+        net.load_state_dict(torch.load(path, weights_only=True), strict=False)
         print("Test from " + path)
         _, testloader = load_vigor_data(args.batch_size, area=args.area, rotation_range=args.rotation_range,
                                                  train=False, weak_supervise=args.Supervision=='Weakly', amount=args.amount)

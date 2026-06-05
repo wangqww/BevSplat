@@ -44,7 +44,7 @@ python "./train_KITTI_weak_weather.py" \
   --test 1 \
   --visualize 0 
 
-#6.25e-5 cos GPS
+#6.25e-5 without GPS
 python "./train_KITTI_weak_nips.py" \
   --rotation_range 10 \
   --stage 1 \
@@ -55,9 +55,23 @@ python "./train_KITTI_weak_nips.py" \
   --name "feat32_depth" \
   --batch_size 8 \
   --epochs 10 \
-  --test 0 \
+  --test 1 \
   --visualize 0
-    
+
+#6.25e-5 with GPS
+python "./train_KITTI_weak_nips.py" \
+  --rotation_range 10 \
+  --stage 1 \
+  --share 1 \
+  --level 1 \
+  --ConfGrd 1 \
+  --GPS_error_coe 1 \
+  --name "feat32_depth" \
+  --batch_size 8 \
+  --epochs 10 \
+  --test 1 \
+  --visualize 0
+
 python "./train_KITTI_weak_seq.py" \
   --rotation_range 0 \
   --stage 4 \
@@ -119,18 +133,19 @@ python "./train_vigor_2DoF.py" \
   --epoch 15
 
 
-### cross area train
+### same area train without GPS noise
 python "./train_vigor_2DoF.py" \
   --rotation_range 0 \
   --share 0 \
   --ConfGrd 1 \
   --level 1 \
   --Supervision "Weakly" \
-  --area "cross" \
-  --name 'vigor_0.3_3.0_60_1e-4_depth' \
+  --area "same" \
+  --name 'vigor_0.3_3.0_70_1.25e-4_depth' \
   --batch_size 8 \
-  --test 0 \
-  --lr 1e-4 \
+  --test 1 \
+  --GPS_error_coe 0 \
+  --lr 1.25e-4 \
   --epoch 15
 
 ### same area train with GPS noise
@@ -141,11 +156,26 @@ python "./train_vigor_2DoF.py" \
   --level 1 \
   --Supervision "Weakly" \
   --area "same" \
-  --name 'vigor_0.3_3.0_70_1.25e-4_depth' \
+  --name 'vigor_0.3_3.0_70_1e-4_depth' \
   --batch_size 8 \
-  --test 0 \
+  --test 1 \
   --GPS_error_coe 1 \
-  --lr 2e-4 \
+  --lr 1e-4 \
+  --epoch 15
+
+### cross area train without GPS noise
+python "./train_vigor_2DoF.py" \
+  --rotation_range 0 \
+  --share 0 \
+  --ConfGrd 1 \
+  --level 1 \
+  --Supervision "Weakly" \
+  --area "cross" \
+  --name 'vigor_0.3_3.0_70_6.5e-5_depth' \
+  --batch_size 8 \
+  --test 1 \
+  --GPS_error_coe 0 \
+  --lr 6.5e-5 \
   --epoch 15
 
 
@@ -159,7 +189,7 @@ python "./train_vigor_2DoF.py" \
   --area "cross" \
   --name 'vigor_0.3_3.0_70_1e-4_depth' \
   --batch_size 8 \
-  --test 0 \
+  --test 1 \
   --GPS_error_coe 1 \
   --lr 1e-4 \
   --epoch 15

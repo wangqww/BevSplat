@@ -89,12 +89,8 @@ class GaussianEncoder(nn.Module):
             nn.Conv2d(3, 128, 7, 1, 3),
             nn.ReLU(),
         )
-        if area == 'same':
-            self.offset_max = [3.0] * 3
-            self.scale_max = [0.3] * 3
-        else:
-            self.offset_max = [3.0] * 3
-            self.scale_max = [0.3] * 3
+        self.offset_max = [3.0] * 3
+        self.scale_max = [0.3] * 3
 
     def map_pdf_to_opacity(
         self,

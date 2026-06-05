@@ -178,7 +178,7 @@
         "console": "integratedTerminal"
       },
       {
-        "name": "Train VIGOR 2DoF Cross",
+        "name": "Test VIGOR 2DoF Cross GPS",
         "type": "debugpy",
         "request": "launch",
         "program": "${file}",
@@ -190,11 +190,12 @@
             "--level", "1",
             "--Supervision", "Weakly",
             "--area", "cross",
-            "--name", "vigor_0.3_3.0_70_1.25e-4_depth",
+            "--name", "vigor_0.3_3.0_70_1e-4_depth",
             "--batch_size", "8",
-            "--test", "0",
-            "--lr", "1.25e-4",
+            "--test", "1",
+            "--lr", "1e-4",
             "--epoch", "15",
+            "--GPS_error_coe", "1"
             // "--amount", "0.01",
         ],
       },
