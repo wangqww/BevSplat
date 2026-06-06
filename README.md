@@ -128,7 +128,7 @@ ${VIGOR_ROOT}/
 │   ├── satellite/
 │   ├── panorama/                            # original panoramas (unused by Stage 1)
 │   ├── pano_mask_sky/                       # sky-masked panoramas (what the model consumes)
-│   └── UniK3D_{train,test}_metric/          # pre-computed metric depth as <id>_depth.npy
+│   └── UniK3D_{same,cross}_metric/          # pre-computed metric depth as <id>_depth.npy
 └── splits__corrected/
     └── <city>/
         ├── satellite_list.txt
@@ -140,21 +140,22 @@ Change the dataset root in `vigor_main/config.py` or `dataLoader/Vigor_dataset_g
 
 **Where the source data comes from.** We use the same VIGOR assembly as [Loc²](https://github.com/vita-epfl/Loc2). Follow [Loc² → Datasets](https://github.com/vita-epfl/Loc2#datasets) (which points at the [official VIGOR repo](https://github.com/Jeff-Zilence/VIGOR/blob/main/data/DATASET.md)) to obtain `satellite/`, `panorama/`, `pano_mask_sky/`, and `splits__corrected/`.
 
-**Generating per-frame depth.** The `UniK3D_{train,test}_metric/<id>_depth.npy` tensors are produced by [UniK3D](https://github.com/lpiccinelli-eth/UniK3D) over every panoramic image in `<city>/panorama/`. Loc² ships a ready-to-use wrapper:
+**Generating per-frame depth.** The `UniK3D_{same,cross}_metric/<id>_depth.npy` tensors are produced by [UniK3D](https://github.com/lpiccinelli-eth/UniK3D); we ship the VIGOR-specific glue (dataset wrapper, model wrapper, runner) in a companion repo at **[eacsai/UniK3Dnew](https://github.com/eacsai/UniK3Dnew)**. Clone it next to BevSplat and run:
 
 ```bash
-# In a separate Loc² checkout
-pip install -e external/unik3d/
-for city in NewYork Chicago SanFrancisco Seattle; do
-  python preprocess/infer_depth_vigor.py \
-      --input  ${VIGOR_ROOT}/${city}/panorama \
-      --output ${VIGOR_ROOT}/${city}/UniK3D_train_metric \
-      --save
-  # repeat with --output .../UniK3D_test_metric for the test split
-done
+git clone https://github.com/eacsai/UniK3Dnew.git
+cd UniK3Dnew
+pip install -e .                              # installs unik3d + its torch deps
+
+# Edit dataset_vigor.py:18 — set `root` to your VIGOR_ROOT.
+# Then generate depth for each (area, split) combination you need:
+python depth_vigor.py --area same  --train 0 --batch_size 4   # same-area test split
+python depth_vigor.py --area same  --train 1 --batch_size 4   # same-area train split
+python depth_vigor.py --area cross --train 0 --batch_size 4   # cross-area test split
+python depth_vigor.py --area cross --train 1 --batch_size 4   # cross-area train split
 ```
 
-(BevSplat consumes the resulting `.npy` files unmodified — only the directory name needs to match `UniK3D_{train,test}_metric/`.)
+Each invocation writes `${VIGOR_ROOT}/<city>/UniK3D_{same|cross}_metric/<id>_depth.npy` for every panorama in the chosen split — which is exactly what BevSplat's `dataLoader/Vigor_dataset_gs.py` expects, no renaming required.
 
 ---
 
