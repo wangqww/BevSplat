@@ -116,7 +116,26 @@ Change the dataset root by editing `KITTI_ROOT` in `kitti_main/config.py` or `ro
 
 **Where the source data comes from.** We use the same KITTI assembly as [Loc²](https://github.com/vita-epfl/Loc2). Follow [Loc² → Datasets](https://github.com/vita-epfl/Loc2#datasets) (which in turn points at [HighlyAccurate](https://github.com/YujiaoShi/HighlyAccurate)) to organize the raw KITTI drives, the satellite tiles, and the train/test1/test2 file lists into `satmap/` + `depth_data/` as shown above.
 
-**Generating per-frame depth.** Loc² doesn't ship per-pixel ground-image depth. The `image_02/grd_depth/*_grd_depth.pt` tensors expected by BevSplat are produced by running [Depth-Anything V2](https://github.com/DepthAnything/Depth-Anything-V2) over every `image_02/grd_no_sky/*.png` in your KITTI tree, then saving each output to the matching `image_02/grd_depth/*_grd_depth.pt` location. (Approximately one `.pt` per RGB frame; total ~6 GB across the KITTI train + test1 + test2 splits.)
+**Generating per-frame depth.** Loc² doesn't ship per-pixel ground-image depth. The `image_02/grd_depth/*_grd_depth.pt` tensors expected by BevSplat are produced by a small fork of Depth-Anything-V2 we maintain at **[eacsai/Depth-Anything-V2](https://github.com/eacsai/Depth-Anything-V2)**. Clone it next to BevSplat and run:
+
+```bash
+git clone https://github.com/eacsai/Depth-Anything-V2.git
+cd Depth-Anything-V2
+pip install -r metric_depth/requirements.txt
+
+# Drop two checkpoints into metric_depth/checkpoints/ :
+#   depth_anything_v2_metric_vkitti_vitl.pth   (HF: depth-anything/Depth-Anything-V2-Metric-VKITTI-Large)
+#   depth_anything_vitl14.pth                  (HF: LiheYoung/Depth-Anything — used for sky masking)
+mkdir -p metric_depth/checkpoints
+
+# Edit three hardcoded paths in metric_depth/predict_KITTI_depth.py to match your local layout —
+# the two checkpoint paths and the `root_directory = '.../KITTI/depth_data'` at the bottom.
+
+cd metric_depth
+python predict_KITTI_depth.py
+```
+
+For every PNG under `${KITTI_ROOT}/depth_data/<date>/<drive>/image_02/data/`, this writes a 256×1024 metric-depth tensor to `<drive>/image_02/grd_depth/<name>_grd_depth.pt` — which is exactly what `dataLoader/KITTI_dataset.py` consumes. ~2–3 h end-to-end on a single RTX 4090; ~6 GB of `.pt` output across train + test1 + test2. See the fork's [`CLAUDE.md`](https://github.com/eacsai/Depth-Anything-V2/blob/main/CLAUDE.md) for a deeper breakdown of what was added on top of upstream and a list of the research-only scripts you can safely ignore.
 
 ### VIGOR
 
