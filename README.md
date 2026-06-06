@@ -2,11 +2,11 @@
 
 **Resolving Height Ambiguity via Feature-Based Gaussian Primitives for Weakly-Supervised Cross-View Localization**
 
-[![NeurIPS 2026 Spotlight](https://img.shields.io/badge/NeurIPS-2026_Spotlight-red.svg)](https://neurips.cc/virtual/2025/loc/san-diego/poster/118781)
+[![NeurIPS 2025 Spotlight](https://img.shields.io/badge/NeurIPS-2025_Spotlight-red.svg)](https://neurips.cc/virtual/2025/loc/san-diego/poster/118781)
 [![arXiv](https://img.shields.io/badge/arXiv-2502.09080-b31b1b.svg)](https://arxiv.org/abs/2502.09080)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Official PyTorch implementation of **BevSplat** (NeurIPS 2026 Spotlight).
+Official PyTorch implementation of **BevSplat** (NeurIPS 2025 Spotlight).
 
 > **TL;DR.** Each ground-image pixel is lifted into the world as `Np = 3` 3D Gaussian primitives whose feature/confidence channels come from a DINOv2 + DPT head; these Gaussians are rasterized orthographically into a Bird's-Eye-View (BEV) feature map and cross-correlated with the satellite tile to localize the camera. Training uses an InfoNCE-style softplus on correlation peaks plus an optional GPS-noise term — `L = L_Weakly + λ₁ · L_GPS` (paper Eq. 1).
 
@@ -396,12 +396,13 @@ If you're poking around the codebase for the first time, `CLAUDE.md` at the repo
 ## Citation
 
 ```bibtex
-@inproceedings{bevsplat2026,
-  title     = {BevSplat: Resolving Height Ambiguity via Feature-Based Gaussian Primitives for Weakly-Supervised Cross-View Localization},
-  author    = {Wang, Qiwei and others},
-  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
-  year      = {2026},
-  url       = {https://arxiv.org/abs/2502.09080},
+@article{wang2025bevsplat,
+  title={BevSplat: Resolving height ambiguity via feature-based Gaussian primitives for weakly-supervised cross-view localization},
+  author={Wang, Qiwei and Wu, Shaoxun and Shi, Yujiao},
+  journal={Advances in Neural Information Processing Systems},
+  volume={38},
+  pages={156668--156696},
+  year={2025}
 }
 ```
 
