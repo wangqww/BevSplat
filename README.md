@@ -147,6 +147,7 @@ ${VIGOR_ROOT}/
 │   ├── satellite/
 │   ├── panorama/                            # original panoramas (unused by Stage 1)
 │   ├── pano_mask_sky/                       # sky-masked panoramas (what the model consumes)
+│   ├── sky_mask/                            # auxiliary PNG masks (255 = sky; Step 1)
 │   └── UniK3D_{same,cross}_metric/          # pre-computed metric depth as <id>_depth.npy
 └── splits__corrected/
     └── <city>/
@@ -157,9 +158,43 @@ ${VIGOR_ROOT}/
 
 Change the dataset root in `vigor_main/config.py` or `dataLoader/Vigor_dataset_gs.py:15`.
 
-**Where the source data comes from.** We use the same VIGOR assembly as [Loc²](https://github.com/vita-epfl/Loc2). Follow [Loc² → Datasets](https://github.com/vita-epfl/Loc2#datasets) (which points at the [official VIGOR repo](https://github.com/Jeff-Zilence/VIGOR/blob/main/data/DATASET.md)) to obtain `satellite/`, `panorama/`, `pano_mask_sky/`, and `splits__corrected/`.
+**Where the source data comes from.** We use the same VIGOR assembly as [Loc²](https://github.com/vita-epfl/Loc2). Follow [Loc² → Datasets](https://github.com/vita-epfl/Loc2#datasets) (which points at the [official VIGOR repo](https://github.com/Jeff-Zilence/VIGOR/blob/main/data/DATASET.md)) to obtain `satellite/`, the original `panorama/` images, and `splits__corrected/`. Generate `pano_mask_sky/` using Step 1 below before running UniK3D.
 
-**Generating per-frame depth.** The `UniK3D_{same,cross}_metric/<id>_depth.npy` tensors are produced by [UniK3D](https://github.com/lpiccinelli-eth/UniK3D); we ship the VIGOR-specific glue (dataset wrapper, model wrapper, runner) in a companion repo at **[eacsai/UniK3Dnew](https://github.com/eacsai/UniK3Dnew)**. Clone it next to BevSplat and run:
+**Step 1: generate sky-masked panoramas.** Our [Depth Anything fork](https://github.com/eacsai/Depth-Anything-V2#bevsplat-vigor-sky-masking) provides [`metric_depth/mask_vigor_sky.py`](https://github.com/eacsai/Depth-Anything-V2/blob/25ed77cad6983520960bde74ace90e65c6a8db41/metric_depth/mask_vigor_sky.py). Although the repository is named Depth-Anything-V2, this sky-masking pass uses **Depth Anything V1 ViT-L**, with the `depth_anything_vitl14.pth` checkpoint. Its relative prediction is used only to derive a sky mask; the metric depth maps are generated separately by UniK3D in Step 2.
+
+The recovered rule is: convert the panorama to RGB / 255, resize while preserving its aspect ratio with a lower bound of 518 and dimensions divisible by 14, apply ImageNet normalization, and run V1. Bilinearly resize the **raw prediction** back to the original panorama dimensions with `align_corners=False`, then retain exactly the pixels where `prediction != 0` and set the others to black. There is no per-image min-max normalization, epsilon threshold, or separate semantic-segmentation model.
+
+Run the following from the directory containing your BevSplat checkout, in a PyTorch environment:
+
+```bash
+export VIGOR_ROOT=/path/to/VIGOR
+git clone https://github.com/eacsai/Depth-Anything-V2.git
+cd Depth-Anything-V2
+git checkout 25ed77cad6983520960bde74ace90e65c6a8db41  # pin the published masking recipe
+pip install torch torchvision numpy pillow opencv-python huggingface_hub tqdm
+mkdir -p metric_depth/checkpoints
+curl -L --fail \
+  https://huggingface.co/LiheYoung/depth_anything_vitl14/resolve/main/pytorch_model.bin \
+  -o metric_depth/checkpoints/depth_anything_vitl14.pth
+
+# Preview one NewYork panorama in a separate output directory.
+python metric_depth/mask_vigor_sky.py \
+  --vigor-root "$VIGOR_ROOT" --cities NewYork --limit 1 \
+  --output-root /path/to/vigor-mask-preview
+
+# Process all four cities and write outputs beside panorama/.
+python metric_depth/mask_vigor_sky.py --vigor-root "$VIGOR_ROOT"
+cd ..
+```
+
+The script reads `${VIGOR_ROOT}/<city>/panorama/` for NewYork, Chicago, SanFrancisco and Seattle, preserves the original dimensions and panorama filenames, and writes:
+
+- `<city>/pano_mask_sky/<original-name>`: RGB panorama with the sky masked black; this is the input to UniK3D and BevSplat.
+- `<city>/sky_mask/<original-stem>.png`: a lossless binary mask, **255 = sky, 0 = retained region**. This auxiliary PNG is not required by the BevSplat loader.
+
+The original panoramas are preserved. Complete existing output pairs are skipped; partial pairs are reported as errors, and `--overwrite` explicitly replaces outputs. CUDA is selected when available; add `--device cpu` for CPU execution or `--device cuda:0` to select a GPU. JPEG re-encoding can introduce small nonzero values near masked boundaries; the PNG mask remains binary. This script restores the rule from the original research code and does not promise byte-identical historical JPEGs across devices or library versions. See the [fork's detailed instructions](https://github.com/eacsai/Depth-Anything-V2#bevsplat-vigor-sky-masking) for all options.
+
+**Step 2: generate metric depth from the masked panoramas.** UniK3D reads the `pano_mask_sky/` images generated in Step 1. The `UniK3D_{same,cross}_metric/<id>_depth.npy` tensors are produced by [UniK3D](https://github.com/lpiccinelli-eth/UniK3D); we ship the VIGOR-specific glue (dataset wrapper, model wrapper, runner) in a companion repo at **[eacsai/UniK3Dnew](https://github.com/eacsai/UniK3Dnew)**. Clone it next to BevSplat and run:
 
 ```bash
 git clone https://github.com/eacsai/UniK3Dnew.git
