@@ -5,6 +5,8 @@ import timm
 from timm import create_model
 import numpy as np
 import types
+from pathlib import Path
+from .public_pretrained import load_hub_model
 
 def center_padding(images, patch_size):
     _, _, h, w = images.shape
@@ -119,7 +121,7 @@ class DINO(torch.nn.Module):
         self.model_name = dino_name
         self.checkpoint_name = f"{dino_name}_{model_name}"
         
-        dino_vit = torch.hub.load("/home/qiwei/.cache/torch/hub/ywyue_FiT3D_main", "dinov2_base_fine", source='local')
+        dino_vit = load_hub_model(str(Path(torch.hub.get_dir()) / "ywyue_FiT3D_main"), "dinov2_base_fine", env_var="BEVSPLAT_FIT3D_REPO", source="local")
         dino_ori = timm.create_model("vit_base_patch14_dinov2.lvd142m", 
                                      pretrained=True, 
                                      dynamic_img_size=True, 

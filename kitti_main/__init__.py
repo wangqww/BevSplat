@@ -1,7 +1,7 @@
 """Clean entry point for BevSplat's KITTI main experiment.
 
-This package reproduces the "Ours" rows of Table 1 in the BevSplat paper
-(arXiv 2502.09080). It is a thin, focused wrapper around the algorithm
+Historical KITTI wrapper, not newly verified as reproducing paper tables
+in the current VIGOR E2 release. It wraps the algorithm
 modules that live elsewhere in the repo:
 
     gaussian/encoder_feat_nips.py   -- per-pixel Gaussian primitive encoder

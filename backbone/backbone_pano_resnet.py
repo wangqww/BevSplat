@@ -11,6 +11,7 @@ from torch import Tensor, nn
 from torchvision.models import ResNet
 
 from .backbone import Backbone
+from models.public_pretrained import load_hub_model
 
 
 @dataclass
@@ -32,7 +33,7 @@ class BackboneResnet(Backbone[BackboneResnetCfg]):
 
         assert d_in == 3
         self.num_layers = 4
-        self.model = torch.hub.load("facebookresearch/dino:main", "dino_resnet50", trust_repo=True)
+        self.model = load_hub_model("facebookresearch/dino:main", "dino_resnet50", trust_repo=True, env_var="BEVSPLAT_DINO_REPO")
 
         # Set up projections
         self.projections = nn.ModuleDict({})

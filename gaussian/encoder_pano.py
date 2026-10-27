@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from fractions import Fraction
+import math
 from typing import Literal, Optional, Union
 
 import torch
@@ -91,6 +92,38 @@ class GaussianEncoder(nn.Module):
         )
         self.offset_max = [3.0] * 3
         self.scale_max = [0.3] * 3
+        self.opacity_max = 1.0
+
+    def configure_ranges(self, offset_max=3.0, scale_max=0.3, opacity_max=1.0):
+        """Non-state scalar ranges; caller must restore flags when loading weights."""
+        if not all(math.isfinite(v) and v > 0 for v in (offset_max, scale_max, opacity_max)) or opacity_max > 1:
+            raise ValueError("Gaussian ranges must be finite/positive and opacity <= 1")
+        self.offset_max = [float(offset_max)] * 3
+        self.scale_max = [float(scale_max)] * 3
+        self.opacity_max = float(opacity_max)
+
+    @torch.no_grad()
+    def zero_initialize_position_offsets(self):
+        """Fresh-run initialization; preserve every non-position output row."""
+        layer = self.to_gaussians[-1]
+        dimension = layer.out_features // self.gpv
+        for primitive in range(self.gpv):
+            rows = slice(primitive * dimension, primitive * dimension + 3)
+            layer.weight[rows].zero_()
+            layer.bias[rows].zero_()
+
+    @staticmethod
+    def offset_geometry_prior(offset_xyz, depth):
+        """Dimensionless all-XYZ soft prior with a fixed valid-input mask."""
+        valid = (torch.isfinite(depth.detach()) & (depth.detach() > 0)).squeeze(-1)
+        masked = torch.where(valid[..., None, None], offset_xyz / 3.0,
+                             torch.zeros_like(offset_xyz))
+        denominator = (3 * offset_xyz.shape[-2] * valid.sum()).clamp_min(1)
+        return masked.square().sum() / denominator
+
+    def geometry_prior(self):
+        """Differentiable penalty from latest real forward; never state_dict."""
+        return self._geometry_prior
 
     def map_pdf_to_opacity(
         self,
@@ -139,6 +172,8 @@ class GaussianEncoder(nn.Module):
         gs_offsets_z = self.pos_act(gaussians[..., 2:3]) * self.offset_max[1]
 
         opacities = self.opacity_act(gaussians[..., 3:4])
+        if self.opacity_max != 1.0:
+            opacities = self.opacity_max * opacities
 
         rotations = self.rot_act(gaussians[..., 4:8])
         scale_x = self.scale_act(gaussians[..., 8:9]) * self.scale_max[0]
@@ -148,6 +183,8 @@ class GaussianEncoder(nn.Module):
         scales = torch.cat([scale_x, scale_y, scale_z], dim=-1)
         offset_xyz = torch.cat([gs_offsets_x, gs_offsets_y, gs_offsets_z], dim=-1)
         
+        self._geometry_prior = self.offset_geometry_prior(offset_xyz, depth_map)
+
         means = coords * depth_map
         means = means[:,:,None,:] + offset_xyz
         covariances = build_covariance(scales, rotations)

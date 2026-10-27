@@ -184,6 +184,15 @@ def Weakly_supervised_loss_w_GPS_error(
 # Inference-time correlation
 # ---------------------------------------------------------------------------
 
+def _translation_origin(length, mode):
+    """Feature-cell origin for equal full grids and torchvision center_crop."""
+    if mode == "legacy":
+        return length / 2
+    if mode == "crop":
+        return float(int(round((length - 1) / 2.0)))
+    raise ValueError("Unknown translation_origin: " + str(mode))
+
+
 def corr_for_translation(
     sat_feat_dict,
     sat_conf_dict,
@@ -255,7 +264,8 @@ def corr_for_translation(
 
     B, corr_H, corr_W = corr.shape
     max_index = torch.argmax(corr.reshape(B, -1), dim=1)
-    pred_u = (max_index % corr_W - corr_W / 2)
-    pred_v = (max_index // corr_W - corr_H / 2)
+    origin_mode = getattr(args, "translation_origin", "legacy")
+    pred_u = max_index % corr_W - _translation_origin(corr_W, origin_mode)
+    pred_v = max_index // corr_W - _translation_origin(corr_H, origin_mode)
 
     return pred_u * np.power(2, 3 - level), pred_v * np.power(2, 3 - level), corr

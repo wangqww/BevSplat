@@ -42,8 +42,11 @@ class FeatureFusionBlock(nn.Module):
         return x
 
 class DPT(nn.Module):
-    def __init__(self, input_dims, output_dim=32, hidden_dim=256, kernel_size=3):
+    def __init__(self, input_dims, output_dim=32, hidden_dim=256, kernel_size=3, confidence_mode="legacy"):
         super().__init__()
+        if confidence_mode not in ("legacy", "corrected"):
+            raise ValueError("Unknown confidence_mode: " + str(confidence_mode))
+        self.confidence_mode = confidence_mode
         assert len(input_dims) == 4
         self.conv_0 = nn.Conv2d(input_dims[0], hidden_dim, 1, padding=0)
         self.conv_1 = nn.Conv2d(input_dims[1], hidden_dim, 1, padding=0)
@@ -84,6 +87,6 @@ class DPT(nn.Module):
 
         out = interpolate(out, scale_factor=2)
         out = self.out_conv(out)
-        conf = nn.Sigmoid()(-self.conf(out))
+        conf = (1.0 - self.conf(out)) if self.confidence_mode == "corrected" else nn.Sigmoid()(-self.conf(out))
         # out = interpolate(out, scale_factor=2)
         return L2_norm(out), conf

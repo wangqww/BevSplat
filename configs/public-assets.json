@@ -1,0 +1,35 @@
+{
+  "torch_hub": [
+    {
+      "name": "dino_resnet50_pretrain.pth",
+      "size": 94345885,
+      "sha256": "156f8c4166a23dc2951ae811e39d76a06269c565932edf647c0187e65cd7aa7c",
+      "url": "https://dl.fbaipublicfiles.com/dino/dino_resnet50_pretrain/dino_resnet50_pretrain.pth"
+    },
+    {
+      "name": "dino_vitbase8_pretrain.pth",
+      "size": 343279349,
+      "sha256": "575f0efc4838938314afa09897a62ed2b87919928b5edcd133abb907328995eb",
+      "url": "https://dl.fbaipublicfiles.com/dino/dino_vitbase8_pretrain/dino_vitbase8_pretrain.pth"
+    },
+    {
+      "name": "dinov2_base_finetuned.pth",
+      "size": 346372960,
+      "sha256": "8709de2a942cd9ed455a2289d3ee91897039846aa1fcfe30c80200921b45416e",
+      "url": "https://huggingface.co/yuanwenyue/FiT3D/resolve/main/dinov2_base_finetuned.pth"
+    },
+    {
+      "name": "vgg16-397923af.pth",
+      "size": 553433881,
+      "sha256": "397923af8e79cdbb6a7127f12361acd7a2f83e06b05044ddf496e83de57a5bf0",
+      "url": "https://download.pytorch.org/models/vgg16-397923af.pth"
+    }
+  ],
+  "timm_hf": {
+    "name": "model.safetensors",
+    "size": 346334872,
+    "sha256": "55cbb5d887b336d430e649c277b85a1429e724871f9d02ac16203235886d8c7b",
+    "repo_id": "timm/vit_base_patch14_dinov2.lvd142m",
+    "revision": "6bcdb58ed0e82e413c98f5ad3894942afd52eed3"
+  }
+}

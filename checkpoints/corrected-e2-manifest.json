@@ -1,0 +1,40 @@
+{
+  "recipe": "corrected E2 continuous fresh15",
+  "epoch_index": 14,
+  "model_behavior": "corrected",
+  "translation_origin": "crop",
+  "seed": 20261022,
+  "peak_lr": {
+    "DPT": "1e-4",
+    "other_Gaussian": "1e-5",
+    "public_ResNet": "1e-6"
+  },
+  "folder": "corrected-e2-fresh15-20261027",
+  "models": [
+    {
+      "key": "same_gps1",
+      "area": "same",
+      "gps": 1,
+      "name": "VIGOR_same_GPS1_corrected_E2_model14.pth",
+      "sha256": "94f1ee0c7b5cc00498592ef8f5a7f6856aa72ff085eb46fe7cd77cc437de9a2f"
+    },
+    {
+      "key": "cross_gps0_lr1e4",
+      "area": "cross",
+      "gps": 0,
+      "name": "VIGOR_cross_GPS0_corrected_E2_model14.pth",
+      "sha256": "1214651efd8dab61e8df7531aa9fd00496cc617a46b15d36bb924c73fbdb65d3"
+    },
+    {
+      "key": "cross_gps1",
+      "area": "cross",
+      "gps": 1,
+      "name": "VIGOR_cross_GPS1_corrected_E2_model14.pth",
+      "sha256": "df5516c7f13206dbc01bfe0ccbcd9d5f61d0d14d4c2094b08b40f5cac08b994f"
+    }
+  ],
+  "pending": [
+    "same_gps0_lr1e4"
+  ],
+  "note": "Historical legacy and earlier weights-continuation runs are separate. Verify provider availability and SHA256 before use."
+}

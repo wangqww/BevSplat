@@ -243,6 +243,7 @@ def render_projections(
     rot_range = 10.0,
     width = 70.0,
     height = 70.0,
+    use_predicted_opacity: bool = False,
 ) -> Float[Tensor, "batch 3 3 height width"]:
     device = gaussians.means.device
     B, _, _ = gaussians.means.shape
@@ -312,7 +313,7 @@ def render_projections(
             gaussians.means[b:b+1],
             gaussians.covariances[b:b+1],
             gaussians.rgbs[b:b+1],
-            gaussians.confidence[b:b+1],
+            (gaussians.opacities if use_predicted_opacity else gaussians.confidence)[b:b+1],
             gaussians.features[b:b+1],
             gaussians.confidence[b:b+1],
             fov_degrees=0.1,

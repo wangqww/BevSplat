@@ -1,7 +1,7 @@
 """Clean entry point for BevSplat's VIGOR 2DoF main experiment.
 
-Reproduces the VIGOR (Same-Area / Cross-Area, with / without λ₁) rows in
-the paper. Same shape as ``kitti_main/`` but adapted to:
+Provides current VIGOR Same/Cross and GPS-coefficient experiments.
+Current corrected E2 results are separate from historical paper rows. Same shape as ``kitti_main/`` but adapted to:
 
     - panoramic ground images (equirectangular sphere lift, not perspective rays)
     - the ``pano_gaussian_feat`` CUDA splatter (not ``feat_gaussian``)

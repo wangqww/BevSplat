@@ -3,11 +3,11 @@
 Both legacy functions were near-duplicates; ``val`` also carried a
 130-line matplotlib visualization block and a "save best model" side
 effect. This module collapses them into a single
-``evaluate(loader, ...)`` call that prints the Table-2 columns.
+``evaluate(loader, ...)`` call that reports native localization metrics.
 
 Metric definitions (per the legacy script):
 
-    distance = sqrt(pred_u² + pred_v²)
+    distance = sqrt((pred_u - gt_u)² + (pred_v - gt_v)²)
     where pred_u/v are in METERS (= corr-pixel * meter_per_pixel)
     and gt_u/v also in METERS (= gt_shift * meter_per_pixel * 512/4).
 """

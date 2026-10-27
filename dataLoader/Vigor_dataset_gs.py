@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 
 num_thread_workers = 64
-root = '/data/dataset/VIGOR'
+root = os.environ.get('VIGOR_ROOT', '/data/dataset/VIGOR')
 
 class VIGORDataset(Dataset):
     def __init__(self, 
@@ -127,20 +127,20 @@ class VIGORDataset(Dataset):
     def __getitem__(self, idx):
 
         # full ground panorama
+        image_path = self.grd_list[idx]
         try:
-            grd = PIL.Image.open(os.path.join(self.grd_list[idx]))
-            grd = grd.convert('RGB')
-        except:
-            print('unreadable image')
-            grd = PIL.Image.new('RGB', (320, 640))  # if the image is unreadable, use a blank image
+            with PIL.Image.open(image_path) as image:
+                grd = image.convert("RGB")
+        except (OSError, ValueError) as exc:
+            raise OSError(f"Cannot read required VIGOR panorama: {image_path}") from exc
         grd = self.grdimage_transform(grd)
 
+        image_path = self.ori_grd_list[idx]
         try:
-            grd_ori = PIL.Image.open(os.path.join(self.ori_grd_list[idx]))
-            grd_ori = grd_ori.convert('RGB')
-        except:
-            print('unreadable image')
-            grd_ori = PIL.Image.new('RGB', (320, 640))  # if the image is unreadable, use a blank image
+            with PIL.Image.open(image_path) as image:
+                grd_ori = image.convert("RGB")
+        except (OSError, ValueError) as exc:
+            raise OSError(f"Cannot read required VIGOR panorama: {image_path}") from exc
         grd_ori = self.grdimage_transform(grd_ori)
 
         # try:
@@ -208,7 +208,7 @@ class VIGORDataset(Dataset):
 
 
 
-def load_vigor_data(batch_size, area="same", rotation_range=0, train=True, weak_supervise=True, amount=1.):
+def load_vigor_data(batch_size, area="same", rotation_range=0, train=True, weak_supervise=True, amount=1., data_root=None):
     """
 
     Args:
@@ -231,7 +231,7 @@ def load_vigor_data(batch_size, area="same", rotation_range=0, train=True, weak_
 
     ])
 
-    vigor = VIGORDataset(root, rotation_range, split=area, train=train, transform=(transform_grd, transform_sat),
+    vigor = VIGORDataset(root if data_root is None else os.fspath(data_root), rotation_range, split=area, train=train, transform=(transform_grd, transform_sat),
                          amount=amount)
     
     if train:

@@ -3,8 +3,8 @@
 #
 # Assumes:
 #   - A working uv venv is active OR the system Python already has torch
-#     2.6.0 + nvcc 11.8 on PATH (use ``source .venv/bin/activate`` if you
-#     installed deps with ``uv sync`` per the README).
+#     2.4.1 + nvcc 11.8 on PATH (use ``source .venv/bin/activate`` if you
+#     installed the README requirements).
 #   - The repo is checked out at $REPO_ROOT (auto-detected from the script
 #     location).
 #
@@ -30,7 +30,7 @@ command -v nvcc    >/dev/null || { echo "[bootstrap] FATAL: nvcc not on PATH; in
 command -v git     >/dev/null || { echo "[bootstrap] FATAL: git required to fetch glm headers"; exit 1; }
 command -v ninja   >/dev/null || { echo "[bootstrap] WARN: ninja missing; torch.utils.cpp_extension build will be slow"; }
 
-python -c "import torch; v = torch.__version__; assert v.startswith('2.6'), f'torch 2.6.x required, got {v}'; assert torch.version.cuda, 'torch CUDA build required'"
+python -c "import torch; v = torch.__version__; assert v.split('+')[0] == '2.4.1', f'current VIGOR release requires torch 2.4.1, got {v}'; assert torch.version.cuda, 'torch CUDA build required'"
 echo "[bootstrap] torch $(python -c 'import torch; print(torch.__version__)') OK"
 
 # ---------------------------------------------------------------------------

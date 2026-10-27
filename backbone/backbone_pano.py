@@ -7,6 +7,7 @@ from jaxtyping import Float
 from torch import Tensor, nn
 
 from .backbone import Backbone
+from models.public_pretrained import load_hub_model
 from .backbone_pano_resnet import BackboneResnet, BackboneResnetCfg
 
 
@@ -21,7 +22,7 @@ class BackboneDino(Backbone[BackboneDinoCfg]):
     def __init__(self, d_in: int = 3) -> None:
         super().__init__()
         assert d_in == 3
-        self.dino = torch.hub.load("facebookresearch/dino:main", 'dino_vitb8', trust_repo=True)
+        self.dino = load_hub_model("facebookresearch/dino:main", 'dino_vitb8', trust_repo=True, env_var="BEVSPLAT_DINO_REPO")
         self.resnet_backbone = BackboneResnet(
             d_in,
         )

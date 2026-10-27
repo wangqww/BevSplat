@@ -1,46 +1,32 @@
-# Reproducible environment for BevSplat.
-#
-# Usage:
-#     curl -LsSf https://astral.sh/uv/install.sh | sh   # install uv if needed
-#     uv venv
-#     uv sync                                            # install Python deps
-#     bash scripts/bootstrap_cuda.sh                     # vendor glm + build CUDA exts
-#
-# The exact versions below match the dev server that produced the paper's
-# Table 1 and Table 2 numbers; they're known to compile together against
-# CUDA 11.8 + nvcc 11.8 + g++ 11. If you want a different CUDA toolkit,
-# change the ``pytorch-cu118`` source below to the matching wheel index
-# (``cu121``, ``cu124``, ...).
-
+# Current VIGOR E2 environment; these are not historical paper-table pins.
 [project]
 name = "bevsplat"
 version = "0.1.0"
-description = "BevSplat: Resolving Height Ambiguity via Feature-Based Gaussian Primitives for Weakly-Supervised Cross-View Localization (NeurIPS 2026)"
+description = "BevSplat: Resolving Height Ambiguity via Feature-Based Gaussian Primitives for Weakly-Supervised Cross-View Localization (NeurIPS 2025)"
 readme = "README.md"
-license = { text = "MIT" }
 requires-python = ">=3.10,<3.12"
 
 dependencies = [
   # Deep learning backbone
-  "torch==2.6.0",
-  "torchvision==0.21.0",
-  "timm==1.0.27",
-  "e3nn==0.6.0",
-  "einops==0.8.1",
-  "jaxtyping==0.3.2",
+  "torch==2.4.1",
+  "torchvision==0.19.1",
+  "timm==1.0.9",
+  "e3nn==0.5.4",
+  "einops==0.8.0",
+  "jaxtyping==0.2.34",
   # Numerical / scientific
   "numpy==1.26.4",
-  "scipy==1.11.4",
-  "pandas==2.1.4",
-  "scikit-image>=0.22,<0.25",
+  "scipy==1.14.1",
+  "pandas==2.2.3",
+  "scikit-image==0.24.0",
   # Imaging / visualization (open3d & plotly are imported at module-load
   # time by gaussian/encoder_pano.py even though the model itself doesn't
   # call them — they're cheap to install and avoid edit-the-source detours)
-  "Pillow>=10.0,<11.0",
-  "matplotlib>=3.8,<3.10",
+  "Pillow==10.4.0",
+  "matplotlib==3.9.2",
   "opencv-python==4.10.0.84",
-  "open3d==0.19.0",
-  "plotly>=5.18,<7.0",
+  "open3d==0.18.0",
+  "plotly==5.24.1",
 ]
 
 [project.optional-dependencies]

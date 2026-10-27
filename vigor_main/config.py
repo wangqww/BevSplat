@@ -6,6 +6,7 @@ Values come from the *existing code*, not the paper. Where the paper
 and code disagree, a comment notes which value we are using.
 """
 
+import os
 from pathlib import Path
 
 # ----------------------------------------------------------------------
@@ -13,10 +14,10 @@ from pathlib import Path
 # ----------------------------------------------------------------------
 
 # VIGOR dataset root. Set in dataLoader/Vigor_dataset_gs.py:15.
-VIGOR_ROOT = Path("/data/dataset/VIGOR")
+VIGOR_ROOT = Path(os.environ.get("VIGOR_ROOT", "/data/dataset/VIGOR")).expanduser()
 
 # Where checkpoints land. Mirrors train_vigor_2DoF.py:667.
-CKPT_ROOT = Path("/data/qiwei/nips25/CVLnet2/ModelsVIGOR/2DoF")
+CKPT_ROOT = Path(os.environ.get("VIGOR_CKPT_ROOT", "/data/qiwei/nips25/CVLnet2/ModelsVIGOR/2DoF")).expanduser()
 
 # ----------------------------------------------------------------------
 # Image / BEV geometry

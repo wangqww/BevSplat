@@ -7,7 +7,8 @@ are dropped here. Only the Stage-1 ``Weakly``-supervised forward is
 preserved.
 
 Submodule names match the legacy ``ModelVIGOR`` exactly so existing
-``.pth`` checkpoints load via ``strict=False`` with no key remapping.
+``.pth`` state names need no key remapping. Public evaluation validates and
+loads the complete state strictly; runtime behavior still needs explicit flags.
 """
 
 from __future__ import annotations
@@ -44,6 +45,13 @@ class BevSplatVIGOR(nn.Module):
     def __init__(self, args, device):
         super().__init__()
         self.args = args
+        self.model_behavior = getattr(args, "model_behavior", "legacy")
+        if self.model_behavior not in ("legacy", "corrected"):
+            raise ValueError("Unknown model_behavior: " + str(self.model_behavior))
+        override = getattr(args, "confidence_mode", "inherit")
+        if override not in ("inherit", "legacy", "corrected"):
+            raise ValueError("Unknown confidence_mode: " + str(override))
+        self.confidence_mode = self.model_behavior if override == "inherit" else override
         self.device = device
         self.share = args.share
         self.grd_res = args.grd_res
@@ -53,13 +61,18 @@ class BevSplatVIGOR(nn.Module):
 
         # Per-pixel Gaussian primitive encoder for the panoramic grd image.
         self.gaussian_encoder = GaussianEncoder(area=args.area)
+        limits = (getattr(args, "gaussian_offset_max", 3.0),
+                  getattr(args, "gaussian_scale_max", 0.3),
+                  getattr(args, "gaussian_opacity_max", 1.0))
+        if limits != (3.0, 0.3, 1.0):
+            self.gaussian_encoder.configure_ranges(*limits)
 
         # DINOv2 trunk + two DPT heads (32-d feature + confidence).
         # ``share=1`` reuses dpt_sat for both branches but the dpt_grd
         # module is still instantiated for checkpoint compat.
         self.dino_feat = DINO()
-        self.dpt_sat = DPT(self.dino_feat.feat_dim)
-        self.dpt_grd = DPT(self.dino_feat.feat_dim)
+        self.dpt_sat = DPT(self.dino_feat.feat_dim, confidence_mode=self.confidence_mode)
+        self.dpt_grd = DPT(self.dino_feat.feat_dim, confidence_mode=self.confidence_mode)
 
         # Kept instantiated to match legacy ckpt keys; not used in the
         # Stage-1 ``Weakly``-supervised forward.
@@ -101,7 +114,6 @@ class BevSplatVIGOR(nn.Module):
         """
         del grd_ori, gt_shift_u, gt_shift_v, stage, loop, save_dir
         b = sat.shape[0]
-        self.gaussian_encoder.eval()  # mirror legacy behavior
 
         # --- Resize satellite to DPT input resolution -------------------
         sat_resized = F.interpolate(sat, (SAT_H, SAT_W), mode="bilinear", align_corners=True)
@@ -157,9 +169,13 @@ class BevSplatVIGOR(nn.Module):
             rot_range=rot_range,
             width=BEV_WIDTH_M,
             height=BEV_HEIGHT_M,
+            use_predicted_opacity=(self.model_behavior == "corrected"),
         )
 
         # --- Crop BEV to the pose-search window -------------------------
+        if getattr(self.args, "translation_origin", "legacy") == "crop":
+            if bev_feat.shape[-2:] != sat_feat_dict[self.level].shape[-2:]:
+                raise ValueError("Crop decoding requires identical full satellite and BEV grids")
         A = sat_feat_dict[self.level].shape[-1]
         crop = int(A * BEV_CROP_RATIO)
         g2s_feat = TF.center_crop(bev_feat, [crop, crop])

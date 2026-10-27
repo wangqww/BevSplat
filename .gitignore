@@ -36,3 +36,14 @@ checkpoints/
 # Local logs / scratch outputs accidentally landing in the repo root
 *.log
 seq/
+
+# Local public-backbone checkouts, caches and documented experiment outputs
+external/
+.cache/
+outputs/
+
+# Publish only checkpoint metadata, never learned weight binaries
+!/checkpoints/
+/checkpoints/*
+!/checkpoints/SHA256SUMS
+!/checkpoints/corrected-e2-manifest.json

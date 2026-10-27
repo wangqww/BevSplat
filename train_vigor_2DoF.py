@@ -407,6 +407,7 @@ def train(net, args, save_path):
             params = net.dpt_sat.parameters()
         else:
             params = list(net.dpt_grd.parameters()) + list(net.dpt_sat.parameters())
+        params = list(net.gaussian_encoder.parameters()) + list(params)
         optimizer = optim.AdamW(params, lr= 3.5e-4, weight_decay=5e-3, eps=1e-8)
         # TODO: change strategy to linear
         scale = float(args.batch_size / 8)

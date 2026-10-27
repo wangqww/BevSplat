@@ -17,7 +17,7 @@ training and ``(None, test_loader)`` for ``train=False``.
 
 from dataLoader.Vigor_dataset_gs import load_vigor_data as _load
 
-from .config import DATA_AMOUNT, ROTATION_RANGE, SUPERVISION
+from .config import DATA_AMOUNT, ROTATION_RANGE, SUPERVISION, VIGOR_ROOT
 
 
 def load_train_and_val(
@@ -36,6 +36,7 @@ def load_train_and_val(
         train=True,
         weak_supervise=weak_supervise,
         amount=amount,
+        data_root=VIGOR_ROOT,
     )
     return train_loader, val_loader
 
@@ -56,5 +57,6 @@ def load_test(
         train=False,
         weak_supervise=weak_supervise,
         amount=amount,
+        data_root=VIGOR_ROOT,
     )
     return test_loader

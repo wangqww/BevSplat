@@ -234,7 +234,6 @@ class ModelVIGOR(nn.Module):
     def forward2DoF(self, sat, grd, depth_imgs, grd_ori, gt_rot, meter_per_pixel):
         b = sat.shape[0]
         grd_res = 80
-        self.gaussian_encoder.eval()
 
         self.near = torch.ones(b).to(self.device) * 0.2
         self.far = torch.ones(b).to(self.device) * 160
