@@ -2,11 +2,18 @@
 
 PyTorch implementation of [Resolving Height Ambiguity via Feature-Based Gaussian Primitives for Weakly-Supervised Cross-View Localization](https://arxiv.org/abs/2502.09080) (NeurIPS 2025).
 
-This release documents the **corrected VIGOR E2 recipe**, including sky masking, metric-depth preparation, and four Same/Cross × GPS0/GPS1 experiments. These runs are separate from the paper's historical legacy checkpoints. The newest Same/GPS0 fixed endpoint is pending completion; intermediate weights are not released as final.
+This repository contains experiments on **KITTI** and **VIGOR**. The guides below cover data preparation, training, and evaluation.
 
-## Installation
+| Dataset | Training settings | Evaluation | Detailed guide |
+|---|---|---|---|
+| KITTI | Two models: GPS loss disabled / enabled | Evaluate each model on Same-Area and Cross-Area | [KITTI guide](kitti_main/README.md) |
+| VIGOR | Four models: Same/Cross-Area × GPS loss disabled/enabled | Train a separate model for each setting | [VIGOR data preparation](docs/data-preparation.md) |
 
-The current experiments used Linux, Python **3.10.13**, PyTorch **2.4.1**, torchvision **0.19.1**, and CUDA **11.8**. A compatible CUDA toolkit/compiler is needed for the rasterizers.
+**GPS0** means the GPS loss coefficient is 0; **GPS1** means it is 1. The current VIGOR models use the corrected implementation described below and are separate from the older paper checkpoints. Same/GPS0 is still training; its final weights will be added after evaluation.
+
+## Install the environment
+
+The current VIGOR experiments used Linux, Python **3.10.13**, PyTorch **2.4.1**, torchvision **0.19.1**, and CUDA **11.8**. A compatible CUDA toolkit/compiler is needed for the rasterizers.
 
 ```bash
 git clone https://github.com/wangqww/BevSplat.git
@@ -19,7 +26,7 @@ bash scripts/bootstrap_cuda.sh
 python -c "import feat_gaussian, pano_gaussian_feat; print('extensions imported')"
 ```
 
-Prepare the pinned public backbones and caches using [public dependencies](docs/public-dependencies.md). Evaluation also constructs these modules before loading a localization checkpoint.
+Download the public pretrained models following [public dependencies](docs/public-dependencies.md), then set the paths below. These models are needed for both training and VIGOR evaluation. KITTI-specific paths and Torch Hub cache behavior are described in the [KITTI guide](kitti_main/README.md#configure-paths-and-dependencies).
 
 ```bash
 export BEVSPLAT_FIT3D_REPO="$PWD/external/FiT3D"
@@ -32,9 +39,17 @@ export VIGOR_CKPT_ROOT="$PWD/outputs"
 python -m vigor_main.train --help
 ```
 
-## Data preparation
+## Prepare the data
 
-Follow [data preparation](docs/data-preparation.md) for the original VIGOR images, corrected labels, pinned Depth Anything **V1 ViT-L** sky masking, and pinned UniK3D metric depth. Dataset images are not redistributed.
+### KITTI
+
+KITTI uses raw driving images, satellite tiles, calibration/GPS files, sky-masked RGB images, and metric-depth tensors. Follow the [KITTI data guide](kitti_main/README.md#prepare-the-data) for the directory layout, dataset sources, and Depth Anything preprocessing commands. The bundled split lists are `dataLoader/train_files.txt`, `test1_files.txt` (Same-Area), and `test2_files.txt` (Cross-Area).
+
+The KITTI depth script writes `grd_depth/` tensors; the loader also requires a separately prepared `grd_no_sky/` RGB directory. These are distinct inputs. The guide makes this preparation requirement explicit.
+
+### VIGOR
+
+Follow [the VIGOR data guide](docs/data-preparation.md) for the original VIGOR images, corrected labels, pinned Depth Anything **V1 ViT-L** sky masking, and pinned UniK3D metric depth. Dataset images are not redistributed.
 
 ```text
 $VIGOR_ROOT/
@@ -55,11 +70,17 @@ $VIGOR_ROOT/
 
 Validation is the ordered final 20% of the corrected training list, separate from official test. Verify label identities with [configs/vigor-labels.sha256](configs/vigor-labels.sha256). Same/Cross use their corresponding metric-depth directories.
 
-## Four fresh15 training runs
+## KITTI experiments
 
-All four use seed **20261022**, batch **8**, one GPU, no accumulation, native float32, and 15 continuous epochs. Peak learning rates: DPT **1e-4**, other Gaussian parameters **1e-5**, public-pretrained ResNet **1e-6**. The main DINO extractor stays frozen; the Gaussian encoder, its used BatchNorm statistics, and both DPT heads train. GPS0/1 is the GPS loss coefficient, with `GPS_error=5` in both.
+KITTI has two training stages: first pretrain the rotation estimator for 5 epochs, then train a localization model for 10 epochs with GPS loss disabled or enabled. Each localization model is evaluated on both test areas, so KITTI needs **two models**, rather than four area-specific models.
 
-Run these commands in **Bash**, each in a fresh process with a new output name. They may run sequentially on one GPU; change `--cuda` to an available device when needed.
+The [KITTI experiment guide](kitti_main/README.md#train-the-models) includes Stage-0 preparation, both training commands, pretrained model downloads, and evaluation commands. It also explains the difference between aligned-heading evaluation (`--rotation_range 0`) and evaluation with heading perturbations. KITTI results have not been rerun as part of this documentation update.
+
+## Train the VIGOR models
+
+Train each VIGOR setting for **15 epochs** using seed **20261022**, batch size **8**, and one GPU. All four settings use the same learning rates: DPT **1e-4**, other Gaussian parameters **1e-5**, and pretrained ResNet **1e-6**. The main DINO feature extractor is frozen; the Gaussian encoder, its active BatchNorm statistics, and both DPT heads are trained. Both GPS settings use `GPS_error=5`. Training uses float32 without gradient accumulation.
+
+Run the following in **Bash**. `COMMON` holds the shared options; the four commands choose the area and GPS setting. Run them separately with new output names. They can run sequentially on one GPU; change `--cuda` if needed.
 
 ```bash
 export PYTHONHASHSEED=20261022
@@ -88,17 +109,17 @@ python -m vigor_main.train "${COMMON[@]}" --cuda 0 \
   --zero_init_gaussian_offsets 1 --name reproduce_cross_gps1
 ```
 
-The loader uses 64 workers. Same has 5261 updates/epoch (last batch 7), 78915 total; Cross has 5152 (last batch 8), 77280 total. Every epoch runs full validation and saves `model_<index>.pth`. The declared endpoint is **model_14.pth** (human epoch 15), without test-based model selection or early stopping.
+The loader uses 64 workers. Same-Area has 5261 optimizer updates per epoch (last batch: 7 samples), 78915 total; Cross-Area has 5152 (last batch: 8 samples), 77280 total. Each epoch runs validation and saves a checkpoint. Use the checkpoint after **epoch 15**, named **`model_14.pth`** because file indices start at zero. The test set is not used to select a checkpoint or stop training.
 
-Fresh means a new VIGOR optimizer/schedule and continuous RNG state, retaining public DINO/FiT3D/ResNet initialization. It does not mean all-random initialization. Offset/scale limits are per coordinate, not vector-norm limits. Fixed seeds do not guarantee bitwise equality across CUDA executions, hardware or library versions. Model-only checkpoints do **not** contain complete optimizer/RNG resume state; historical `resume`/`continue_weights` paths are not exact resume.
+Each run starts from public DINO/FiT3D/ResNet pretrained weights with a new optimizer and learning-rate schedule, and trains continuously for 15 epochs. Gaussian offset/scale limits apply to each coordinate. A fixed seed helps comparison but does not guarantee identical results across hardware or library versions. Saved model weights do **not** restore the complete optimizer and random-number state; `resume`/`continue_weights` are not exact training-state recovery.
 
-## Fixed-endpoint evaluation and weights
+## Download and evaluate VIGOR models
 
-Open the [OneDrive release folder](https://1drv.ms/f/c/86d953bfc66eb903/IgAP7P2tFzChR7rHeMuXIOq8AakOxR02eKMyI2Z7qsMjLxo?e=zaD0Fb), then `corrected-e2-fresh15-20261027`. Match the filename and SHA256 in [the checkpoint manifest](checkpoints/corrected-e2-manifest.json) and [SHA256SUMS](checkpoints/SHA256SUMS). Legacy files in the parent folder belong to a different forward recipe.
+Open the [OneDrive release folder](https://1drv.ms/f/c/86d953bfc66eb903/IgAP7P2tFzChR7rHeMuXIOq8AakOxR02eKMyI2Z7qsMjLxo?e=zaD0Fb), then `corrected-e2-fresh15-20261027`. Check the filename against [the model list](checkpoints/corrected-e2-manifest.json) and verify the download with [SHA256SUMS](checkpoints/SHA256SUMS). The parent folder also contains the older KITTI/paper checkpoints; use the matching dataset guide and commands.
 
 | Model | AREA | GPS | Checkpoint filename |
 |---|---|---:|---|
-| Same/GPS0 | same | 0 | Pending verified final model14 |
+| Same/GPS0 | same | 0 | Still training; final weights not yet available |
 | Same/GPS1 | same | 1 | VIGOR_same_GPS1_corrected_E2_model14.pth |
 | Cross/GPS0 | cross | 0 | VIGOR_cross_GPS0_corrected_E2_model14.pth |
 | Cross/GPS1 | cross | 1 | VIGOR_cross_GPS1_corrected_E2_model14.pth |
@@ -119,17 +140,17 @@ for SPLIT in val test; do
 done
 ```
 
-Public evaluation requires a complete matching state dictionary; missing/incompatible weights are errors. Runtime settings (corrected/legacy, crop decoding, confidence and Gaussian ranges) are not encoded in state dictionaries, so retain the matching command.
+VIGOR evaluation rejects missing or incompatible model weights. Keep the evaluation options matched to the downloaded model: the weight file does not store settings such as `corrected`/`legacy` behavior, crop decoding, confidence mode, or Gaussian ranges.
 
-The evaluator saves prediction/GT MAT vectors. Native metrics use float32 `sqrt((pred_u-gt_u)^2 + (pred_v-gt_v)^2)` in meters: mean, median, and strict `<1`, `<3`, `<5` meter rates. Validation is not official test. Historical initialization and optimizer histories differ, so comparisons do not prove a single-factor causal effect or reproduce historical training bit for bit.
+Evaluation saves predictions and ground truth in MAT files. It reports mean/median position error in meters and the percentage of errors strictly below 1, 3, and 5 meters. The distance calculation is float32 `sqrt((pred_u-gt_u)^2 + (pred_v-gt_v)^2)`. Report validation and official-test results separately. Older checkpoints used different training histories; do not interpret comparisons with them as controlled single-factor experiments.
 
-## Verification and supported scope
+## Tests and reproducibility
 
 ```bash
 CUDA_VISIBLE_DEVICES= python -B -m unittest discover -s tests -p 'test_vigor_*.py' -v
 ```
 
-CPU regressions and one real fresh CPU constructor were checked in the recorded environment; all 994 initial tensors matched the frozen training initial-state digest. GPU/private-controller tests are explicit opt-ins/skips. A clean-machine full training rerun was not performed for this packaging release. The supported current path is VIGOR 2DoF, fixed 128×128 BEV rasterization. Legacy KITTI/sequence/Oxford and scratch scripts are retained historical code, with unresolved dependencies/hardcoded paths outside this verified recipe; see [kitti_main](kitti_main/README.md).
+The current VIGOR path was checked with CPU regressions and a real model-initialization check; all 994 initial tensors matched the training reference. Some tests require a GPU or internal experiment controllers and are skipped by default. We have not repeated complete training on a clean machine for this documentation release. VIGOR uses 2DoF localization with a fixed 128×128 BEV. The [KITTI guide](kitti_main/README.md) documents its own settings and remaining setup requirements. Older sequence/Oxford/scratch experiments may need additional dependencies and path changes.
 
 ## Citation and licenses
 
