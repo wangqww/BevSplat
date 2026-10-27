@@ -22,7 +22,7 @@ KITTI/
 
 Calibration files belong under the **date directory**, not inside each drive. The loader reads both original RGB (`data/`) and sky-masked RGB (`grd_no_sky/`), as well as metric depth. Keep matching frame names in each directory.
 
-### Generate metric depth
+### 1. Generate the sky mask and metric depth
 
 Use the pinned [Depth Anything companion](https://github.com/eacsai/Depth-Anything-V2) in a compatible preprocessing environment:
 
@@ -45,7 +45,28 @@ python predict_KITTI_depth.py
 
 Set `depth_v2_load_from`, the V1 `torch.load(...)` path, and `root_directory` in that script to your checkpoint files and `KITTI/depth_data`. It is a CUDA script, not a CPU entry point. It scans the configured KITTI dates and saves 256×1024 tensors to `image_02/grd_depth/<frame>_grd_depth.pt`; it also writes `grd_height/`, which the main KITTI localization loader does not require.
 
-The depth mask retains V1 predictions **>0.05**, after resizing to 256×1024, and multiplies the V2 metric depth by that mask. This differs from VIGOR's exact-zero mask rule. **This script does not write `grd_no_sky/` RGB images.** That directory must be prepared separately; its original generator is not bundled here. Do not assume the VIGOR mask command completes KITTI preprocessing or replace missing masked images with original RGB without reporting the change.
+The depth mask retains raw V1 predictions **>0.05**, after bilinear resizing to 256×1024 with `align_corners=False`, and multiplies the V2 metric depth by that mask. This differs from VIGOR's exact-zero mask rule. V1 supplies the sky mask; V2 supplies metric depth. The script writes the masked depth tensors, not RGB images. Generate the RGB input in the next step.
+
+### 2. Generate sky-masked RGB (`grd_no_sky`)
+
+From the BevSplat repository root, use the masked depth produced above to create the missing RGB images. The helper runs entirely on **CPU** and uses the shared PyTorch, Pillow, and NumPy dependencies; it does not run either depth model again.
+
+```bash
+export KITTI_ROOT=/absolute/path/to/KITTI
+
+# Preview one sorted frame in a separate directory; dataset files are preserved.
+python scripts/prepare_kitti_rgb.py --kitti-root "$KITTI_ROOT" \
+  --output-root /absolute/path/to/kitti-rgb-preview --limit 1
+
+# After inspecting the preview, generate all frames under the dataset root.
+python scripts/prepare_kitti_rgb.py --kitti-root "$KITTI_ROOT"
+```
+
+For each frame, the helper reads `depth_data/<date>/<drive>/image_02/data/<frame>.png` and the corresponding `grd_depth/<frame>_grd_depth.pt`. It converts the original image to RGB, resizes it to **1024×256 with Pillow bilinear interpolation**, retains pixels with **masked metric depth >0**, and sets pixels with **depth ==0** to black. It writes a lossless RGB PNG to `image_02/grd_no_sky/<frame>.png`, with the same frame name and depth-aligned dimensions. With `--output-root`, the same `depth_data/...` layout is created under the preview root. Open the preview PNG and check the reported `processed`, `unchanged`, and `failed` counts; a failed frame causes a nonzero exit status.
+
+Depth must be a finite, nonnegative float32 tensor of shape `(256, 1024)`. Raw RGB and depth files are never modified. An identical existing output is left unchanged; a different or invalid existing image is refused. Use a separate output root when comparing with historical `grd_no_sky` images rather than overwriting them.
+
+**This is a new, explicitly defined RGB-generation recipe based on the stored masked depth.** It also blackens any other zero-depth pixels, so it is not guaranteed to equal the raw V1 sky mask alone. The previous README documented V1 sky masking and V2 depth generation, but the historical RGB-writing step was not recovered. Do not claim these newly generated PNGs are pixel-identical to historical KITTI inputs, or that existing KITTI checkpoints have been reevaluated on them. VIGOR uses its separate panorama-mask command.
 
 ## Configure paths and dependencies
 

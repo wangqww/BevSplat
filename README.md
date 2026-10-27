@@ -45,7 +45,7 @@ python -m vigor_main.train --help
 
 KITTI uses raw driving images, satellite tiles, calibration/GPS files, sky-masked RGB images, and metric-depth tensors. Follow the [KITTI data guide](kitti_main/README.md#prepare-the-data) for the directory layout, dataset sources, and Depth Anything preprocessing commands. The bundled split lists are `dataLoader/train_files.txt`, `test1_files.txt` (Same-Area), and `test2_files.txt` (Cross-Area).
 
-The KITTI depth script writes `grd_depth/` tensors; the loader also requires a separately prepared `grd_no_sky/` RGB directory. These are distinct inputs. The guide makes this preparation requirement explicit.
+KITTI preprocessing uses **Depth Anything V1 for the sky mask** and **Depth Anything V2 for metric depth**. After generating the masked depth, run `python scripts/prepare_kitti_rgb.py --kitti-root /path/to/KITTI` to create the required `grd_no_sky/` RGB images. The [step-by-step guide](kitti_main/README.md#2-generate-sky-masked-rgb-grd_no_sky) includes a preview command and explains the exact pixel rule. This new RGB-generation step is fully specified; it does not claim to recreate historical masked images byte for byte.
 
 ### VIGOR
 
