@@ -31,10 +31,15 @@
       "gps": 1,
       "name": "VIGOR_cross_GPS1_corrected_E2_model14.pth",
       "sha256": "df5516c7f13206dbc01bfe0ccbcd9d5f61d0d14d4c2094b08b40f5cac08b994f"
+    },
+    {
+      "key": "same_gps0_lr1e4",
+      "area": "same",
+      "gps": 0,
+      "name": "VIGOR_same_GPS0_corrected_E2_model14.pth",
+      "sha256": "844006c5d73d43454669a8b73659bdf47e883e2977a24fdaedce1801e8f8cd16"
     }
   ],
-  "pending": [
-    "same_gps0_lr1e4"
-  ],
+  "pending": [],
   "note": "Historical legacy and earlier weights-continuation runs are separate. Verify provider availability and SHA256 before use."
 }

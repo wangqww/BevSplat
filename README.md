@@ -9,7 +9,7 @@ This repository contains experiments on **KITTI** and **VIGOR**. The guides belo
 | KITTI | Two models: GPS loss disabled / enabled | Evaluate each model on Same-Area and Cross-Area | [KITTI guide](kitti_main/README.md) |
 | VIGOR | Four models: Same/Cross-Area × GPS loss disabled/enabled | Train a separate model for each setting | [VIGOR data preparation](docs/data-preparation.md) |
 
-**GPS0** means the GPS loss coefficient is 0; **GPS1** means it is 1. The current VIGOR models use the corrected implementation described below and are separate from the older paper checkpoints. Same/GPS0 is still training; its final weights will be added after evaluation.
+**GPS0** means the GPS loss coefficient is 0; **GPS1** means it is 1. The current VIGOR models use the corrected implementation described below and are separate from the older paper checkpoints. All four current VIGOR models have completed training and evaluation; their final weights are available below.
 
 ## Install the environment
 
@@ -119,13 +119,13 @@ Open the [OneDrive release folder](https://1drv.ms/f/c/86d953bfc66eb903/IgAP7P2t
 
 | Model | AREA | GPS | Checkpoint filename |
 |---|---|---:|---|
-| Same/GPS0 | same | 0 | Still training; final weights not yet available |
+| Same/GPS0 | same | 0 | VIGOR_same_GPS0_corrected_E2_model14.pth |
 | Same/GPS1 | same | 1 | VIGOR_same_GPS1_corrected_E2_model14.pth |
 | Cross/GPS0 | cross | 0 | VIGOR_cross_GPS0_corrected_E2_model14.pth |
 | Cross/GPS1 | cross | 1 | VIGOR_cross_GPS1_corrected_E2_model14.pth |
 
 ```bash
-# After download, run in the directory containing these three files:
+# After download, run in the directory containing these four files:
 sha256sum -c /absolute/path/to/BevSplat/checkpoints/SHA256SUMS
 
 # Return to BevSplat and reuse COMMON/environment above. Example: Same/GPS1.
