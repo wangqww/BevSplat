@@ -1,0 +1,297 @@
+{
+  "documentation_base_commit": "e2ce568f314a48b8bcf1c100b5cb30029e1c3b16",
+  "measurement_scope": "Released-checkpoint evaluation on author prepared data and existing 4090 environment; not a clean-machine/full raw-data regeneration measurement. The current VIGOR models are separate from historical paper checkpoints.",
+  "metric_definition": "Native float32 Euclidean position error; percentages use strict less-than thresholds. KITTI angles use native circular absolute difference in degrees.",
+  "KITTI": {
+    "verified_source_commit": "e2ce568f314a48b8bcf1c100b5cb30029e1c3b16",
+    "protocol": {
+      "rotation_range_deg": 10,
+      "renderer_rotation_scale_deg": 10,
+      "shift_range_lat_m": 20,
+      "shift_range_lon_m": 20,
+      "batch_size": 8,
+      "level": "1",
+      "channels": "32_16_4",
+      "N_iters": 1,
+      "native_GT_heading_coordinate_decode": true
+    },
+    "fixed_lists": {
+      "train_files.txt": {
+        "sha256": "0f599a956a80d7fb59d78019d622fda20753bd16edba7324c2fa75b3273cad1d",
+        "rows": 19655
+      },
+      "test1_files.txt": {
+        "sha256": "3bb6920747144ecc41bfa73f5c4964bc4efedc53f136dc9cf3df4a9b24b9a7a5",
+        "rows": 3773
+      },
+      "test2_files.txt": {
+        "sha256": "424304901beb11071d88050718eb06d7947757dc798f9a0f79b5bb8f45ce2472",
+        "rows": 7542
+      }
+    },
+    "models": [
+      {
+        "GPS_error_coe": 0,
+        "checkpoint": {
+          "filename": "KITTI_no_GPS.pth",
+          "bytes": 1196716600,
+          "sha256": "a3bea77af0475d5c710e0c8d47cc5b38402350b9c306022b792231a67dc5eaee"
+        },
+        "endpoints": {
+          "test1": {
+            "N": 3773,
+            "metrics": {
+              "loc_mean_m": 5.685894012451172,
+              "loc_median_m": 2.751375675201416,
+              "lat_mean_m": 1.2328917980194092,
+              "lat_median_m": 0.8167071342468262,
+              "lon_mean_m": 5.239666938781738,
+              "lon_median_m": 2.3817601203918457,
+              "angle_mean_deg": 0.2133973091840744,
+              "angle_median_deg": 0.18757176399230957,
+              "lat_d=1m_%": 58.65359130665253,
+              "lon_d=1m_%": 24.675324675324674,
+              "dist_d=1m_%": 12.82798833819242,
+              "angle_t=1deg_%": 99.89398356745296,
+              "lat_d=3m_%": 92.79088258680095,
+              "lon_d=3m_%": 57.6464351974556,
+              "dist_d=3m_%": 53.00821627352239,
+              "angle_t=3deg_%": 100.0,
+              "lat_d=5m_%": 97.98568778160615,
+              "lon_d=5m_%": 70.92499337397297,
+              "dist_d=5m_%": 69.36125099390405,
+              "angle_t=5deg_%": 100.0
+            }
+          },
+          "test2": {
+            "N": 7542,
+            "metrics": {
+              "loc_mean_m": 6.753074645996094,
+              "loc_median_m": 2.969623565673828,
+              "lat_mean_m": 1.288024663925171,
+              "lat_median_m": 0.8072481155395508,
+              "lon_mean_m": 6.284391403198242,
+              "lon_median_m": 2.598360061645508,
+              "angle_mean_deg": 0.18823125958442688,
+              "angle_median_deg": 0.1646265983581543,
+              "lat_d=1m_%": 59.480243967117474,
+              "lon_d=1m_%": 24.118271015645718,
+              "dist_d=1m_%": 12.065765049058605,
+              "angle_t=1deg_%": 100.0,
+              "lat_d=3m_%": 93.54282683638291,
+              "lon_d=3m_%": 54.41527446300716,
+              "dist_d=3m_%": 50.47732696897375,
+              "angle_t=3deg_%": 100.0,
+              "lat_d=5m_%": 97.48077433041632,
+              "lon_d=5m_%": 65.4600901617608,
+              "dist_d=5m_%": 63.975072924953594,
+              "angle_t=5deg_%": 100.0
+            }
+          }
+        }
+      },
+      {
+        "GPS_error_coe": 1,
+        "checkpoint": {
+          "filename": "KITTI_GPS.pth",
+          "bytes": 1196716600,
+          "sha256": "fa07ebd4f511d7f894632aaca46bf21b696a2144a96bbdebed956ac6fd1bfbbd"
+        },
+        "endpoints": {
+          "test1": {
+            "N": 3773,
+            "metrics": {
+              "loc_mean_m": 2.8399953842163086,
+              "loc_median_m": 1.8824938535690308,
+              "lat_mean_m": 0.9675193428993225,
+              "lat_median_m": 0.7271437644958496,
+              "lon_mean_m": 2.4150516986846924,
+              "lon_median_m": 1.418416976928711,
+              "angle_mean_deg": 0.2133973091840744,
+              "angle_median_deg": 0.18757176399230957,
+              "lat_d=1m_%": 63.02676914921813,
+              "lon_d=1m_%": 37.66233766233766,
+              "dist_d=1m_%": 21.229790617545717,
+              "angle_t=1deg_%": 99.89398356745296,
+              "lat_d=3m_%": 95.78584680625497,
+              "lon_d=3m_%": 80.51948051948052,
+              "dist_d=3m_%": 74.42353564802544,
+              "angle_t=3deg_%": 100.0,
+              "lat_d=5m_%": 99.86747945931619,
+              "lon_d=5m_%": 91.75722236946727,
+              "dist_d=5m_%": 90.6440498277233,
+              "angle_t=5deg_%": 100.0
+            }
+          },
+          "test2": {
+            "N": 7542,
+            "metrics": {
+              "loc_mean_m": 5.874008655548096,
+              "loc_median_m": 2.3879733085632324,
+              "lat_mean_m": 1.137109398841858,
+              "lat_median_m": 0.7477474212646484,
+              "lon_mean_m": 5.424670219421387,
+              "lon_median_m": 1.9031667709350586,
+              "angle_mean_deg": 0.18823125958442688,
+              "angle_median_deg": 0.1646265983581543,
+              "lat_d=1m_%": 62.74197825510475,
+              "lon_d=1m_%": 29.819676478387695,
+              "dist_d=1m_%": 16.10978520286396,
+              "angle_t=1deg_%": 100.0,
+              "lat_d=3m_%": 95.05436223813312,
+              "lon_d=3m_%": 63.82922301776717,
+              "dist_d=3m_%": 59.6260938743039,
+              "angle_t=3deg_%": 100.0,
+              "lat_d=5m_%": 98.38239193847785,
+              "lon_d=5m_%": 74.06523468575973,
+              "dist_d=5m_%": 72.64651286131,
+              "angle_t=5deg_%": 100.0
+            }
+          }
+        }
+      }
+    ]
+  },
+  "VIGOR": {
+    "protocol": {
+      "model_behavior": "corrected",
+      "translation_origin": "crop",
+      "rotation_range_deg": 0,
+      "confidence_mode": "inherit",
+      "gaussian_offset_max_per_axis": 3,
+      "gaussian_scale_max_per_axis": 0.3,
+      "gaussian_opacity_max": 1,
+      "GPS_error_m": 5,
+      "batch_size": 8,
+      "seed": 20261022,
+      "amount": 1,
+      "final_checkpoint_epoch_index": 14
+    },
+    "models": [
+      {
+        "area": "same",
+        "GPS_error_coe": 0,
+        "checkpoint": {
+          "filename": "VIGOR_same_GPS0_corrected_E2_model14.pth",
+          "bytes": 1254521428,
+          "sha256": "844006c5d73d43454669a8b73659bdf47e883e2977a24fdaedce1801e8f8cd16"
+        },
+        "endpoints": {
+          "val": {
+            "N": 10522,
+            "metrics": {
+              "loc_mean_m": 3.2556748390197754,
+              "loc_median_m": 1.418318510055542,
+              "within_1m_percent": 30.954191218399547,
+              "within_3m_percent": 79.62364569473485,
+              "within_5m_percent": 85.87720965595894
+            }
+          },
+          "test": {
+            "N": 52605,
+            "metrics": {
+              "loc_mean_m": 3.1164143085479736,
+              "loc_median_m": 1.4841272830963135,
+              "within_1m_percent": 31.24227735006178,
+              "within_3m_percent": 75.8426005132592,
+              "within_5m_percent": 86.05645851154833
+            }
+          }
+        }
+      },
+      {
+        "area": "same",
+        "GPS_error_coe": 1,
+        "checkpoint": {
+          "filename": "VIGOR_same_GPS1_corrected_E2_model14.pth",
+          "bytes": 1254521428,
+          "sha256": "94f1ee0c7b5cc00498592ef8f5a7f6856aa72ff085eb46fe7cd77cc437de9a2f"
+        },
+        "endpoints": {
+          "val": {
+            "N": 10522,
+            "metrics": {
+              "loc_mean_m": 2.702066659927368,
+              "loc_median_m": 1.1963893175125122,
+              "within_1m_percent": 39.78331115757461,
+              "within_3m_percent": 83.52024329975289,
+              "within_5m_percent": 88.60482797947158
+            }
+          },
+          "test": {
+            "N": 52605,
+            "metrics": {
+              "loc_mean_m": 2.624114513397217,
+              "loc_median_m": 1.2851699590682983,
+              "within_1m_percent": 38.0705256154358,
+              "within_3m_percent": 79.89734816082121,
+              "within_5m_percent": 89.09799448721604
+            }
+          }
+        }
+      },
+      {
+        "area": "cross",
+        "GPS_error_coe": 0,
+        "checkpoint": {
+          "filename": "VIGOR_cross_GPS0_corrected_E2_model14.pth",
+          "bytes": 1254521428,
+          "sha256": "1214651efd8dab61e8df7531aa9fd00496cc617a46b15d36bb924c73fbdb65d3"
+        },
+        "endpoints": {
+          "val": {
+            "N": 10304,
+            "metrics": {
+              "loc_mean_m": 2.587649345397949,
+              "loc_median_m": 1.2851691246032715,
+              "within_1m_percent": 35.879270186335404,
+              "within_3m_percent": 86.52950310559007,
+              "within_5m_percent": 90.722049689441
+            }
+          },
+          "test": {
+            "N": 53694,
+            "metrics": {
+              "loc_mean_m": 3.0487239360809326,
+              "loc_median_m": 1.4183177947998047,
+              "within_1m_percent": 31.893693895034826,
+              "within_3m_percent": 81.95515327597124,
+              "within_5m_percent": 87.88132752262823
+            }
+          }
+        }
+      },
+      {
+        "area": "cross",
+        "GPS_error_coe": 1,
+        "checkpoint": {
+          "filename": "VIGOR_cross_GPS1_corrected_E2_model14.pth",
+          "bytes": 1254521428,
+          "sha256": "df5516c7f13206dbc01bfe0ccbcd9d5f61d0d14d4c2094b08b40f5cac08b994f"
+        },
+        "endpoints": {
+          "val": {
+            "N": 10304,
+            "metrics": {
+              "loc_mean_m": 2.1578593254089355,
+              "loc_median_m": 1.0693256855010986,
+              "within_1m_percent": 45.982142857142854,
+              "within_3m_percent": 89.47981366459628,
+              "within_5m_percent": 92.82802795031056
+            }
+          },
+          "test": {
+            "N": 53694,
+            "metrics": {
+              "loc_mean_m": 2.66365122795105,
+              "loc_median_m": 1.2177695035934448,
+              "within_1m_percent": 39.68227362461355,
+              "within_3m_percent": 84.8288449361195,
+              "within_5m_percent": 89.96535925801766
+            }
+          }
+        }
+      }
+    ]
+  }
+}

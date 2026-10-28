@@ -2,11 +2,11 @@
 
 [Repository setup](../README.md#install-the-environment) · [KITTI guide](../kitti_main/README.md) · [File inventory](../docs/reproduction-files.md)
 
-This guide covers the four current 15-epoch VIGOR models: Same/Cross-Area × GPS0/GPS1. They use **corrected behavior and crop decoding**, and are separate from the historical paper checkpoints. For testing downloaded models, complete sections 1–4; localization training is optional.
+This guide covers the four current 15-epoch VIGOR models: Same/Cross-Area × GPS0/GPS1. They use **corrected behavior and crop decoding**, and are separate from the historical paper checkpoints. For testing downloaded models with prepared data, complete sections 1, 3 and 4; preserve the matching corrected lists, masked panoramas and both metric-depth directories, and skip section 2 generation. Localization training is optional.
 
 ## 1. Required files
 
-See the [VIGOR file inventory](../docs/reproduction-files.md#vigor-inputs) and [public initialization assets](../docs/public-dependencies.md). You need original satellite/panorama images, **matching corrected lists**, sky-masked panorama JPEGs, protocol-specific metric NPYs, all model-construction assets and the matching final localization checkpoint. `sky_mask/` PNGs are diagnostic outputs, not loader inputs.
+See the [VIGOR file inventory](../docs/reproduction-files.md#vigor-inputs) and [public initialization assets](../docs/public-dependencies.md). You need original satellite/panorama images, **matching corrected lists**, sky-masked panorama JPEGs, protocol-specific metric NPYs, all model-construction assets and the matching final localization checkpoint. `sky_mask/` files are optional diagnostic masks, not loader inputs. The historical corpus may contain JPEG masks; the current generator writes PNG masks.
 
 ## 2. Prepare the data
 
@@ -86,7 +86,7 @@ Open the [OneDrive release folder](https://1drv.ms/f/c/86d953bfc66eb903/IgAP7P2t
 | Cross/GPS0 | cross | 0 | VIGOR_cross_GPS0_corrected_E2_model14.pth |
 | Cross/GPS1 | cross | 1 | VIGOR_cross_GPS1_corrected_E2_model14.pth |
 
-This **Bash block is independent of the training section**. It defines all evaluation options and tests all four checkpoints; `val` is included separately for comparison with the internal validation results. Keep the environment in section 3 active.
+This **Bash block is independent of the training section**. It defines every evaluation option and runs the four official tests. For optional internal validation as well, change `for SPLIT in test` to `for SPLIT in val test`; keep validation separate from official test. Keep the environment in section 3 active.
 
 ```bash
 set -euo pipefail
@@ -109,14 +109,14 @@ for AREA in same cross; do
   for GPS in 0 1; do
     CKPT="$CHECKPOINT_DIR/VIGOR_${AREA}_GPS${GPS}_corrected_E2_model14.pth"
     test -f "$CKPT"
-    for SPLIT in val test; do
+    for SPLIT in test; do
       python -m vigor_main.train "${EVAL[@]}" --cuda 0         --area "$AREA" --GPS_error_coe "$GPS" --eval_split "$SPLIT"         --ckpt "$CKPT" --name "verify_${AREA}_gps${GPS}_${SPLIT}"
     done
   done
 done
 ```
 
-Evaluation rejects incomplete/incompatible checkpoints. It writes `<area>_val_result.mat` or `<area>_result.mat` and corresponding result TXT files under the run directory printed at startup. The MAT vectors are `pred_us`, `pred_vs`, `gt_us`, `gt_vs`; they retain evaluation order. Mean/median error use float32 `sqrt((pred_u-gt_u)^2+(pred_v-gt_v)^2)` in meters; percentages use strict **<1/<3/<5 m**. Use a new `--name` for each evaluation so previous result files are not confused with the current run.
+The [machine-readable references](../configs/reproduction-reference.json) include the four checkpoint identities and separate official-test/internal-validation metrics. Evaluation rejects incomplete/incompatible checkpoints. It writes `<area>_val_result.mat` or `<area>_result.mat` and corresponding result TXT files under the run directory printed at startup. The MAT vectors are `pred_us`, `pred_vs`, `gt_us`, `gt_vs`; they retain evaluation order. Mean/median error use float32 `sqrt((pred_u-gt_u)^2+(pred_v-gt_v)^2)` in meters; percentages use strict **<1/<3/<5 m**. Use a new `--name` for each evaluation so previous result files are not confused with the current run.
 
 ## 5. Train the models
 

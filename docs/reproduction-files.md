@@ -35,7 +35,7 @@ The four `.pth` initialization assets go under `$TORCH_HOME/hub/checkpoints/`; t
 | `$KITTI_ROOT/depth_data/<date>/calib_cam_to_cam.txt` | Date-level `P_rect_02` camera intrinsics |
 | `$KITTI_ROOT/depth_data/<date>/<drive>/oxts/data/<frame>.txt` | GPS for sampling and heading for satellite alignment; required even for GPS0 |
 | `image_02/grd_depth/<frame>_grd_depth.pt` | Masked metric depth, float32 `(256,1024)`, finite/nonnegative; produced by the pinned depth companion |
-| `image_02/grd_no_sky/<frame>.png` | Masked RGB consumed by localization; new CPU recipe derives black pixels from stored depth zeros |
+| `image_02/grd_no_sky/<frame>.png` | Historical masked RGB in the prepared archive, used for the recorded reference results; preserve it. The optional new CPU recipe derives a separate approximation from stored depth zeros |
 | `scripts/prepare_kitti_rgb.py` | Produce depth-aligned 1024×256 PNGs from raw RGB + masked depth; refuses differing existing outputs |
 | `dataLoader/KITTI_dataset.py` | Actual `root_dir`, frame path/perturbation parsing and input loading |
 | `data_utils.py` | KITTI satellite pixel scale and camera/GPS shift conventions |
@@ -43,7 +43,9 @@ The four `.pth` initialization assets go under `$TORCH_HOME/hub/checkpoints/`; t
 | `kitti_main/{train,data,model,eval}.py` | CLI/training/loading, loader wrappers, localization model and native evaluation |
 | `train_KITTI_weak_nips.py` | Legacy Stage0 entry; edit its explicit GPU/output paths before pretraining |
 | Stage0 `model_4.pth` | Complete Stage0 model state used to initialize compatible Stage1 keys, not just a rotation-head file; training-only requirement |
-| `KITTI_no_GPS.pth`, `KITTI_GPS.pth` | Historical final localization models in the OneDrive parent; each tests both test1/test2. Their full-byte/complete-load/result verification is not included here |
+| `KITTI_no_GPS.pth`, `KITTI_GPS.pth` | Released final localization models in the OneDrive parent; each tests both test1/test2. Full SHA256, exact 989-key loading and native 10° evaluation results are verified |
+| `configs/kitti-checkpoints.sha256` | Verify the exact two downloaded KITTI localization weight files |
+| `configs/reproduction-reference.json` | KITTI R10 and current VIGOR protocol settings, checkpoint identities, split sizes and full-precision reference metrics |
 
 `grd_height/` is an auxiliary depth-companion output; the main KITTI localization loader does not require it. Stage0 uses the same prepared dataset, so it does not bypass RGB/depth preparation.
 
@@ -60,7 +62,7 @@ The four `.pth` initialization assets go under `$TORCH_HOME/hub/checkpoints/`; t
 | `$VIGOR_ROOT/<city>/satellite/*.jpg` | Target satellite images referenced by list indices |
 | `$VIGOR_ROOT/<city>/panorama/*.jpg` | Original panorama; loader opens it even where the current forward does not use that branch |
 | `$VIGOR_ROOT/<city>/pano_mask_sky/*.jpg` | Masked panorama used by the Gaussian encoder and UniK3D preprocessing |
-| `$VIGOR_ROOT/<city>/sky_mask/*.png` | Optional diagnostic masks; not consumed by localization |
+| `$VIGOR_ROOT/<city>/sky_mask/*` | Optional diagnostic masks (historical JPEG or generated PNG); not consumed by localization |
 | `$VIGOR_ROOT/<city>/UniK3D_same_metric/*_depth.npy` | Same-Area metric depth, float32 `(1,320,640)` |
 | `$VIGOR_ROOT/<city>/UniK3D_cross_metric/*_depth.npy` | Cross-Area metric depth; keep its protocol identity |
 | `scripts/prepare_vigor_depth.py` | Portable bridge selecting corrected lists/order and producing the required metric-depth layout |

@@ -11,9 +11,18 @@ Start with the shared installation, then follow one complete dataset guide. Both
 
 **GPS0** disables the GPS loss; **GPS1** enables it. See [required files and their roles](docs/reproduction-files.md) for every dataset input, preprocessing model, initialization asset, localization checkpoint, configuration entry and result file. Downloaded weights are enough to skip localization training; they do not remove the need for prepared data or model-construction assets.
 
+## Reproduce the published-weight results
+
+1. Obtain the matching **prepared dataset**, including its masked RGB, depth and fixed labels. Complete KITTI/VIGOR archives are currently being packaged and verified; their download links will be added after upload verification. If you already have the prepared corpus, use it directly.
+2. Install the shared environment and public model-construction assets below.
+3. Follow the dataset guide's path configuration and weight checksum steps.
+4. Run the guide's evaluation block: **KITTI uses `rotation_range=10`** and tests both areas with each of two weights; **VIGOR uses corrected/crop behavior with `rotation_range=0`** and four area/GPS-specific weights.
+
+Using prepared data and released weights skips localization training and the Depth Anything/UniK3D/RGB-generation steps. Keep the archived historical inputs unchanged. [Expected results and weight identities](configs/reproduction-reference.json) provide the reference for all six models; [file roles](docs/reproduction-files.md) distinguish data, constructor assets and localization weights.
+
 ## Install the environment
 
-The verified current VIGOR runs used Linux, Python **3.10.13**, PyTorch **2.4.1**, torchvision **0.19.1**, and CUDA **11.8**. KITTI uses the shared model dependencies, but a complete clean-machine KITTI evaluation has not been verified in this environment. A compatible CUDA toolkit/compiler is required for the rasterizers.
+The released KITTI and current VIGOR models were evaluated in the author's existing Linux environment with Python **3.10.13**, PyTorch **2.4.1**, torchvision **0.19.1**, and CUDA **11.8**. A complete clean-machine installation and data rebuild has not been verified. A compatible CUDA toolkit/compiler is required for the rasterizers.
 
 ```bash
 git clone https://github.com/wangqww/BevSplat.git
@@ -45,10 +54,10 @@ Set dataset/output paths using the chosen guide. KITTI's actual loader still req
 | Item | Current evidence | Remaining limit |
 |---|---|---|
 | VIGOR released models | All four fixed final checkpoints, independent validation/test endpoints and weight identities verified on the author's existing corpus; [measured test results](vigor_main/README.md#6-results-and-verification) | Regenerated masked JPEG/depth NPY files have not been compared file by file with that historical corpus |
-| KITTI historical models | Data/CLI paths inspected, fixed split identities recorded, new CPU RGB-generation helper tested | Historical masked RGB generation was not recovered; the new recipe and historical checkpoints have not undergone a complete KITTI evaluation together |
+| KITTI released models | Both weight identities, complete 989-key loading and full test1/test2 results verified with ±10° heading perturbations; [measured results](kitti_main/README.md#6-results-and-verification) | Recorded results use preserved historical inputs; the optional new RGB recipe is not a bitwise reconstruction of those inputs |
 | Fresh-machine reproduction | Pinned loading/preprocessing code, asset checksums, explicit commands and file roles documented | No complete clean-machine data rebuild plus KITTI/VIGOR training/test reproduction has been performed |
 
-These are distinct checks: matching split hashes does not prove matching image/depth bytes, and loading a checkpoint does not prove matching behavior switches. The guides identify the missing evidence rather than guarantee identical numerical results. Original datasets must be obtained from their providers; this repository does not redistribute them.
+These references establish successful released-checkpoint evaluation on the author's prepared data. Matching split hashes alone does not establish matching RGB/depth bytes. The Git repository contains code and manifests, not the dataset images; prepared-data archive delivery is in progress. The provider/preprocessing instructions remain available as an alternative way to build inputs.
 
 ## Focused CPU checks
 

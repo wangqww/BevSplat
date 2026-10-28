@@ -2,9 +2,9 @@
 
 [Repository setup](../README.md#install-the-environment) · [VIGOR guide](../vigor_main/README.md) · [File inventory](../docs/reproduction-files.md)
 
-KITTI has two training settings: **GPS0** disables the GPS loss and **GPS1** enables it. Each trained model is evaluated on **test1 (Same-Area)** and **test2 (Cross-Area)**. For downloaded-weight evaluation, complete sections 1–4; Stage0/Stage1 training is optional.
+KITTI has two training settings: **GPS0** disables the GPS loss and **GPS1** enables it. Each trained model is evaluated on **test1 (Same-Area)** and **test2 (Cross-Area)**. For downloaded-weight evaluation with prepared data, complete sections 1, 3 and 4; keep the historical masked RGB/depth and skip section 2 generation. Stage0/Stage1 training is optional.
 
-This guide documents the actual existing code and a specified new RGB-generation recipe. It does not certify historical KITTI input equality or reproduced paper scores; see section 6.
+The two released checkpoints have been successfully evaluated on the preserved historical inputs with the native ±10° heading protocol; section 6 records the measurements. Section 2 is an optional input-generation route, not a replacement for the archived inputs used by those measurements.
 
 ## 1. Required files
 
@@ -88,7 +88,7 @@ Run commands from the BevSplat repository root after the [shared installation](.
 - Dataset path: set `root_dir` in `dataLoader/KITTI_dataset.py`. The similarly named `KITTI_ROOT` constant in `kitti_main/config.py` is not passed to the actual loader.
 - `KITTI_ROOT` is only a shell convenience for preprocessing commands; the localization loader does not consume it. Set `root_dir` explicitly.
 - Output path: set `CKPT_ROOT` in `kitti_main/config.py` to your experiment directory.
-- Rotation initialization: pass an explicit Stage-0 checkpoint with `--stage1_init`.
+- Rotation initialization: `--stage1_init` is needed only for Stage1 training. Evaluation loads the final checkpoint directly, including its rotation-estimation weights.
 
 KITTI's Gaussian backbone loads DINO ViT-B/8 and ResNet50 through Torch Hub. It still requests `facebookresearch/dino:main` directly, so the VIGOR `BEVSPLAT_DINO_REPO` override does not cover every KITTI module. Allow these downloads on first use, or prepare the Torch Hub cache separately before offline execution. The VIGOR asset manifest alone is not a complete offline KITTI setup.
 
@@ -110,22 +110,31 @@ The [OneDrive parent folder](https://1drv.ms/f/c/86d953bfc66eb903/IgAP7P2tFzChR7
 | GPS loss disabled | `KITTI_no_GPS.pth` |
 | GPS loss enabled | `KITTI_GPS.pth` |
 
-Download them into `checkpoints/` or use absolute checkpoint paths:
+Download both files into one directory and verify their full bytes with [the KITTI checksum list](../configs/kitti-checkpoints.sha256). Run the following **Bash** block from the repository root after section 3:
 
 ```bash
 set -euo pipefail
-test -f checkpoints/KITTI_no_GPS.pth && python -m kitti_main.train --cuda 0 --test 1 \
-  --rotation_range 0 --GPS_error_coe 0 \
-  --ckpt checkpoints/KITTI_no_GPS.pth --name evaluate_kitti_gps0
-
-test -f checkpoints/KITTI_GPS.pth && python -m kitti_main.train --cuda 0 --test 1 \
-  --rotation_range 0 --GPS_error_coe 1 \
-  --ckpt checkpoints/KITTI_GPS.pth --name evaluate_kitti_gps1
+CHECKPOINT_DIR=/absolute/path/to/downloaded/checkpoints
+CHECKPOINT_SUMS="$PWD/configs/kitti-checkpoints.sha256"
+(cd "$CHECKPOINT_DIR" && sha256sum -c "$CHECKPOINT_SUMS")
+EVAL=(
+  --cuda 0 --test 1 --rotation_range 10
+  --shift_range_lat 20 --shift_range_lon 20 --batch_size 8
+  --GPS_error 5
+)
+python -m kitti_main.train "${EVAL[@]}" --GPS_error_coe 0 \
+  --ckpt "$CHECKPOINT_DIR/KITTI_no_GPS.pth" --name verify_kitti_gps0_r10
+python -m kitti_main.train "${EVAL[@]}" --GPS_error_coe 1 \
+  --ckpt "$CHECKPOINT_DIR/KITTI_GPS.pth" --name verify_kitti_gps1_r10
 ```
 
-Each command evaluates test1 and test2 and writes their MAT predictions and result text files. **These examples use aligned headings**: `--rotation_range 0` disables heading perturbation/estimation and makes angle errors zero by construction. They are translation evaluations, not evidence of unknown-heading 3DoF performance. For a heading-perturbation experiment, select a nonzero range consistently for the data and model and report that range; do not compare the two protocols as if they were identical.
+Each command runs complete test1 and test2 and writes MAT predictions and result text files. **The reference protocol is `rotation_range=10`**: fixed list values introduce approximately ±10° perturbations, and the checkpoint's rotation branch estimates the heading. No separate Stage0 file is loaded in evaluation-only mode. Keep the bundled model configuration (N_iters=1, level=1 and its architecture/confidence defaults) and native GT-heading coordinate decoding unchanged. These model fields are configuration constants, not extra CLI options.
 
-The KITTI loader is still permissive when loading checkpoints: a missing path can warn and continue, and incompatible/missing keys may be skipped. Confirm that the file exists and inspect loading counts/skips before trusting results. The stricter VIGOR checkpoint checks do not apply here. The two KITTI files' provider names/sizes were checked for this documentation update; their tensors and dataset metrics were not reevaluated.
+The BEV renderer currently defaults to a 10° rotation scale, which matches this setting. An arbitrary different nonzero CLI range does not automatically update the renderer; it needs a separately consistent configuration and verification.
+
+For an optional aligned-heading translation comparison, change the single `rotation_range` option above to 0 and use new output names. That disables heading perturbation/estimation and makes angle errors zero by construction; report it separately from the 10° results.
+
+The native KITTI CLI still has permissive checkpoint loading. The two files above were verified with **989/989 matching state keys and zero missing, extra or shape-mismatched entries**. Verify their SHA256 before use and inspect full loading counts/skips; do not rely on a missing-file warning or a partially loaded model.
 
 ## 5. Train the models
 
@@ -162,6 +171,17 @@ Each command trains one localization model, saves `model_0.pth` through `model_9
 
 KITTI writes `test1_result.mat`, `test2_result.mat`, `test1_results.txt` and `test2_results.txt` under the printed run directory. MAT files contain `pred_lons`, `pred_lats`, `pred_oriens`, `gt_lons`, `gt_lats`, `gt_oriens`. TXT metrics include position/lateral/longitudinal errors in meters and angle errors in degrees, with strict `<1/3/5` thresholds. TXT logs append, so choose a new `--name` for each evaluation.
 
-No verified numerical KITTI reference is attached to this release. In particular, the historical KITTI checkpoints have not been evaluated on the new depth-derived `grd_no_sky` recipe, and zero-range aligned-heading commands cannot establish perturbed-heading paper results. Do not publish the output as a reproduced paper row without matching the checkpoint, input corpus and heading protocol.
+Both released weights have been successfully reproduced on the author's stored KITTI corpus with native `rotation_range=10`, renderer scale 10°, 20m translation ranges, batch8, level1 and N_iters1. Each endpoint's six float32 vectors, fixed-list GT order and all 20 native metrics were independently checked on CPU against the native JSON/TXT/log outputs.
 
-To claim exact dataset/result reproduction, still needed are the historical RGB-writing recipe or matching input identities, a frozen satellite/raw/preprocessed-input manifest, complete preprocessing environment/batch provenance, KITTI checkpoint byte identities and complete-loading validation, and a full clean-machine evaluation using that dataset. These are verification gaps, not instructions to alter images, labels, metrics or checkpoint loading to match a target.
+| Weight | Split | N | Position mean m | Position median m | Heading mean ° | Heading median ° |
+|---|---|---:|---:|---:|---:|---:|
+| GPS0 | test1 (Same-Area) | 3773 | 5.686 | 2.751 | 0.213 | 0.188 |
+| GPS0 | test2 (Cross-Area) | 7542 | 6.753 | 2.970 | 0.188 | 0.165 |
+| GPS1 | test1 (Same-Area) | 3773 | 2.840 | 1.882 | 0.213 | 0.188 |
+| GPS1 | test2 (Cross-Area) | 7542 | 5.874 | 2.388 | 0.188 | 0.165 |
+
+Strict heading error <1° is 99.89% for test1 and 100% for test2 for both weights. The [machine-readable references](../configs/reproduction-reference.json) include all 20 metrics and exact checkpoint identities. Test1 retains all 3773 prescribed rows, including repeated frames with prescribed perturbations; do not deduplicate it.
+
+The default train/test input closure has also been SHA256-inventoried: 152880 files / 116563396853 bytes across original RGB, historical masked RGB, masked metric PT, satellite tiles, OXTS and calibration. This is the set read by the fixed-list loaders, not every auxiliary file in the full KITTI directory. Its manifest will accompany the prepared-data archive.
+
+These results use the existing 4090 environment and preserved historical inputs. A three-frame V1/V2/RGB rerun produced close but nonidentical inputs, so use the prepared historical files to reproduce the recorded scores. A complete raw-data rebuild and clean-machine installation are separate from this successful released-weight evaluation.
