@@ -1,6 +1,8 @@
-# VIGOR data preparation
+# VIGOR preprocessing details
 
-Obtain the original images and corrected split lists through [VIGOR](https://github.com/Jeff-Zilence/VIGOR/blob/main/data/DATASET.md) and the [Loc2 data instructions](https://github.com/vita-epfl/Loc2#datasets). Preserve filenames and list order under `splits__corrected`; do not randomly resplit. From the dataset root, run `sha256sum -c /absolute/path/to/BevSplat/configs/vigor-labels.sha256`.
+Start with the [complete VIGOR guide](../vigor_main/README.md) for required files, paths, evaluation and measured results. This page only expands its preprocessing step.
+
+Obtain original images through [VIGOR](https://github.com/Jeff-Zilence/VIGOR/blob/main/data/DATASET.md). Separately obtain the 16 corrected lists matching the repository checksum manifest; this repository does not bundle those lists. The official original `splits.zip` and Loc2 instructions do not by themselves establish that identity. Preserve filenames and list order under `splits__corrected`; do not randomly resplit. From the dataset root, run `sha256sum -c /absolute/path/to/BevSplat/configs/vigor-labels.sha256`.
 
 All four cities are NewYork, Seattle, SanFrancisco and Chicago. The training loader requires original `panorama`, masked `pano_mask_sky`, satellite images, and protocol-specific metric NPY files. Missing images now fail with the offending path instead of becoming black placeholders.
 
@@ -30,9 +32,8 @@ Use a separate environment compatible with the pinned UniK3D dependency and its 
 ```bash
 git clone https://github.com/eacsai/UniK3Dnew.git external/UniK3Dnew
 git -C external/UniK3Dnew checkout 83f63a31332e6998dabb2619a7c5b8358d17712a
-# In the preprocessing environment, from external/UniK3Dnew:
-pip install -e .
-# Return to the BevSplat root before the commands below.
+# In the preprocessing environment; keep the parent shell at the BevSplat root:
+(cd external/UniK3Dnew && pip install -e .)
 export HF_HOME="$PWD/.cache/unik3d-huggingface"
 unset HF_HUB_OFFLINE
 python - <<'PYMODEL'
@@ -66,6 +67,8 @@ done
 
 `train` here covers the entire source list later divided into localization train/validation. Existing outputs cause an error unless `--overwrite` is explicit. The new bridge avoids the old dependency CLI's hardcoded CUDA2/root and `__getitem__` output side effects. Do not use its `vigor_plus`/Kansas entry as VIGOR.
 
-The wrapper uses public `lpiccinelli/unik3d-vitl` (recorded revision `008aa54308b8bc142f74c9c7b098833aaede06bd`), Spherical 512×1024 camera, resolution level 9, raw RGB PIL bilinear resize to 640×320, normalization and distance output. It intentionally retains the original runner's **train mode** during no-grad inference. Negative depths, resized uint8 RGB sums below 16 and depths **>80 m** become zero (80 retained). Files are `(1,320,640)` at `<city>/UniK3D_<area>_metric/<panorama-stem>_depth.npy`.
+The wrapper uses public `lpiccinelli/unik3d-vitl` (recorded revision `008aa54308b8bc142f74c9c7b098833aaede06bd`), Spherical 512×1024 camera, resolution level 9, input masked RGB PIL bilinear resize to 640×320, normalization and distance output. It intentionally retains the original runner's **train mode** during no-grad inference. Negative depths, resized uint8 RGB sums below 16 and depths **>80 m** become zero (80 retained). Files are `(1,320,640)` at `<city>/UniK3D_<area>_metric/<panorama-stem>_depth.npy`.
 
 The pinned companion includes device/path and batch-shape repairs with a CPU batch-2 smoke. This release checked the real ordered-path dry run; it did not regenerate the full corpus or certify historical NPY pixel equality. Train-mode inference, batching and dependency versions can affect regenerated values. Use the same generated corpus across compared localization runs and record its provenance.
+
+The bridge fixes NumPy seed 2022, but does not restore historical Torch RNG, complete batch composition or a full preprocessing dependency lock. Its default batch size 8 specifies this generation run, not proven historical batching. Keep batch size/order/mode constant and record dependency versions when comparing generated corpora; do not claim identical historical NPYs from the code/weight pins alone.
