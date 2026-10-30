@@ -4,6 +4,47 @@
 
 Paths below are repository-relative unless prefixed by a dataset root. “Evaluation” means using a released localization checkpoint. “Training” additionally requires the training images/lists and initialization. Preprocessing models are only needed to create RGB/depth inputs; a localization `.pth` does not generate them.
 
+## Prepared dataset downloads
+
+| Dataset | Prepared data status | Download / next step |
+|---|---|---|
+| VIGOR | Complete preserved author corpus; all 65 compressed volumes verified against the server archive using provider MD5 and size | [Google Drive](https://drive.google.com/drive/folders/1TVEwjSp-FFWL-c6hh-bMbrKgcCvX4c8Q); restore below, then use VIGOR guide sections 3 and 4 |
+| KITTI | Complete server archive verified; cloud upload and final delivery verification are still in progress | Keep using the matching prepared corpus if already available; download link will follow verification |
+
+The VIGOR download includes original panoramas and satellite images, historical sky-masked JPEGs and diagnostic sky-mask JPEGs, corrected lists, and both `UniK3D_same_metric/` and `UniK3D_cross_metric/`. It preserves the inputs used for the recorded VIGOR results. Using it skips VIGOR guide section 2 preprocessing and localization training; the [constructor assets](public-dependencies.md) and matching [localization weights](../vigor_main/README.md#4-download-weights-and-evaluate) are still required.
+
+Download the complete **VIGOR** folder, retaining its `parts/` directory. It contains **65** ordered volumes, `VIGOR.tar.gz.part-0000` through `VIGOR.tar.gz.part-0064`, totaling **275792716549 bytes** (about 275.8 GB). The archive has **721992 members**, including directories. Reserve about **387 GB** for restored logical source files in addition to the downloaded parts, plus space for assets, the environment and result output. Actual allocated disk space may differ from logical file sizes.
+
+| Downloaded file | Purpose |
+|---|---|
+| `parts/VIGOR.tar.gz.part-*` | All 65 segments of one gzip-compressed tar stream; a subset cannot restore the dataset |
+| `SHA256SUMS` | SHA256 of every compressed volume; verify before extraction |
+| `MD5SUMS` | Frozen MD5 values used to compare the uploaded volumes with the author archive |
+| `volumes.tsv` | Exact concatenation order, volume sizes and modification times |
+| `source.paths.txt` | Complete preserved member-name list, including directories; not per-file content hashes |
+| `RESTORE_DATASETS.txt` | Standalone restoration and evaluation instructions inside the VIGOR download |
+| `EXPECTED_RESULTS.json` | Unchanged six-model KITTI/VIGOR protocol, checkpoint and metric reference; KITTI entries do not imply its dataset upload is complete |
+| `METADATA_SHA256SUMS` | SHA256 checks of the other six metadata files, excluding itself |
+
+The expected SHA256 of `METADATA_SHA256SUMS` is `b8cee58c645a5d8be2ee96eb86143e3369ba60c554e34e2c93eb1fe69c2cbcea`. Use Linux with Bash, GNU coreutils, gzip and GNU tar. Choose a new data parent; the block refuses an existing `VIGOR` root and does not create an intermediate uncompressed tar file.
+
+```bash
+set -euo pipefail
+export LC_ALL=C
+ARCHIVE_DIR=/absolute/path/to/downloaded/VIGOR
+DATA_PARENT=/absolute/path/to/new/data-parent
+mkdir -p "$DATA_PARENT"
+cd "$ARCHIVE_DIR"
+sha256sum -c METADATA_SHA256SUMS
+(cd parts && sha256sum -c ../SHA256SUMS)
+test ! -e "$DATA_PARENT/VIGOR"
+while IFS=$'\t' read -r PART BYTES MODTIME; do
+  cat -- "parts/$PART"
+done < volumes.tsv | gzip -dc | tar --acls --xattrs --no-same-owner -xpf - -C "$DATA_PARENT"
+```
+
+After restoration, set `VIGOR_ROOT` to `$DATA_PARENT/VIGOR` and continue with the [VIGOR path configuration](../vigor_main/README.md#3-configure-paths-and-dependencies) and [four-model evaluation](../vigor_main/README.md#4-download-weights-and-evaluate), including list and weight checksum checks. Keep the preserved RGB/depth inputs unchanged when comparing with `EXPECTED_RESULTS.json`. No KITTI folder or parent Drive-folder files are needed for this VIGOR download.
+
 ## Shared code and initialization assets
 
 | File or directory | Where it comes from / purpose | Needed when |
@@ -113,4 +154,4 @@ The V2 identity above comes from pinned public Hugging Face LFS metadata. It ver
 | VIGOR `<area>_result.mat` / `<area>_results.txt` | Official test predictions/GT and metrics |
 | Saved `model_<index>.pth` | Model-only state; current VIGOR final index14 means epoch15, KITTI Stage1 final index9 means epoch10 |
 
-These outputs are created by evaluation/training; they are not required downloads. Model-only files do not restore full optimizer/RNG state for exact training recovery. Preserve the code revision, complete CLI/env settings, source-list identities and generated-input identities with each result. Current public checksums cover the declared lists/assets/models, **not the entire raw/preprocessed corpus**. A full matching-corpus manifest and independent clean-machine rebuild/test remain necessary before asserting identical-dataset numerical reproduction.
+These outputs are created by evaluation/training; they are not required downloads. Model-only files do not restore full optimizer/RNG state for exact training recovery. Preserve the code revision, complete CLI/env settings, source-list identities and generated-input identities with each result. List/asset/model hashes cover their declared files. The prepared VIGOR download additionally binds every compressed volume of the complete preserved corpus; verify its metadata and archive checksums before restoration. This does not establish a clean-machine installation, bitwise raw-data regeneration or training-from-scratch reproduction. KITTI prepared-data delivery is still in progress.

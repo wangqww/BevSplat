@@ -13,7 +13,7 @@ Start with the shared installation, then follow one complete dataset guide. Both
 
 ## Reproduce the published-weight results
 
-1. Obtain the matching **prepared dataset**, including its masked RGB, depth and fixed labels. Complete KITTI/VIGOR archives are currently being packaged and verified; their download links will be added after upload verification. If you already have the prepared corpus, use it directly.
+1. Obtain the matching **prepared dataset**, including its masked RGB, depth and fixed labels. The complete [VIGOR prepared archive](https://drive.google.com/drive/folders/1TVEwjSp-FFWL-c6hh-bMbrKgcCvX4c8Q) is available; follow [checksum and restoration instructions](docs/reproduction-files.md#prepared-dataset-downloads). The complete KITTI archive is still uploading. If you already have the matching prepared corpus, use it directly.
 2. Install the shared environment and public model-construction assets below.
 3. Follow the dataset guide's path configuration and weight checksum steps.
 4. Run the guide's evaluation block: **KITTI uses `rotation_range=10`** and tests both areas with each of two weights; **VIGOR uses corrected/crop behavior with `rotation_range=0`** and four area/GPS-specific weights.
@@ -57,7 +57,7 @@ Set dataset/output paths using the chosen guide. KITTI's actual loader still req
 | KITTI released models | Both weight identities, complete 989-key loading and full test1/test2 results verified with ±10° heading perturbations; [measured results](kitti_main/README.md#6-results-and-verification) | Recorded results use preserved historical inputs; the optional new RGB recipe is not a bitwise reconstruction of those inputs |
 | Fresh-machine reproduction | Pinned loading/preprocessing code, asset checksums, explicit commands and file roles documented | No complete clean-machine data rebuild plus KITTI/VIGOR training/test reproduction has been performed |
 
-These references establish successful released-checkpoint evaluation on the author's prepared data. Matching split hashes alone does not establish matching RGB/depth bytes. The Git repository contains code and manifests, not the dataset images; prepared-data archive delivery is in progress. The provider/preprocessing instructions remain available as an alternative way to build inputs.
+These references establish successful released-checkpoint evaluation on the author's prepared data. Matching split hashes alone does not establish matching RGB/depth bytes. The Git repository contains code and manifests; the [VIGOR prepared download](docs/reproduction-files.md#prepared-dataset-downloads) provides the preserved corpus. KITTI archive delivery is still in progress. The provider/preprocessing instructions remain available as an alternative way to build inputs.
 
 ## Focused CPU checks
 
