@@ -4,6 +4,45 @@
 
 This guide covers the four current 15-epoch VIGOR models: Same/Cross-Area × GPS0/GPS1. They use **corrected behavior and crop decoding**, and are separate from the historical paper checkpoints. For testing downloaded models with prepared data, complete sections 1, 3 and 4; preserve the matching corrected lists, masked panoramas and both metric-depth directories, and skip section 2 generation. Localization training is optional.
 
+## Quick start: evaluate the released VIGOR models
+
+Use the prepared download below to reproduce the four **official-test** rows in [section 6](#6-results-and-verification). You can use VIGOR independently while the KITTI data upload continues. Follow this route in one Bash shell; preprocessing and localization training are optional alternatives, not prerequisites for evaluating the released weights.
+
+1. **Install the localization environment and constructor assets.** Follow [shared installation](../README.md#install-the-environment), then [public initialization dependencies](../docs/public-dependencies.md), including all five checked model assets. These are required before loading the four final localization weights.
+2. **Download the complete [prepared VIGOR folder](https://drive.google.com/drive/folders/1TVEwjSp-FFWL-c6hh-bMbrKgcCvX4c8Q).** Keep its `parts/` directory with all **65** volumes (`0000`–`0064`) and the seven metadata files beside it: `SHA256SUMS`, `MD5SUMS`, `volumes.tsv`, `source.paths.txt`, `RESTORE_DATASETS.txt`, `EXPECTED_RESULTS.json`, and `METADATA_SHA256SUMS`. The parts total **275792716549 bytes** (275.8 GB); restored logical source is about **387.2 GB**. Reserve space for both if retaining the download, plus the environment, assets, weights and outputs. Actual allocated disk space can differ.
+3. **Verify and restore on Linux** using Bash, GNU coreutils, gzip and GNU tar. Set the two absolute paths below. `ARCHIVE_DIR` is the downloaded folder containing `parts/`; `DATA_PARENT` is a new parent for the restored dataset. The metadata manifest SHA256 is `b8cee58c645a5d8be2ee96eb86143e3369ba60c554e34e2c93eb1fe69c2cbcea`. The block checks metadata and every volume, follows `volumes.tsv` order, and refuses an existing target root. It streams extraction without an intermediate uncompressed tar file.
+
+```bash
+set -euo pipefail
+export LC_ALL=C
+ARCHIVE_DIR=/absolute/path/to/downloaded/VIGOR
+DATA_PARENT=/absolute/path/to/new/data-parent
+mkdir -p "$DATA_PARENT"
+cd "$ARCHIVE_DIR"
+sha256sum -c METADATA_SHA256SUMS
+(cd parts && sha256sum -c ../SHA256SUMS)
+test ! -e "$DATA_PARENT/VIGOR"
+while IFS=$'\t' read -r PART BYTES MODTIME; do
+  cat -- "parts/$PART"
+done < volumes.tsv | gzip -dc | tar --acls --xattrs --no-same-owner -xpf - -C "$DATA_PARENT"
+```
+
+The restored root is **`$DATA_PARENT/VIGOR`**, containing `splits__corrected/` and the four city directories. It is different from the downloaded archive folder, `parts/`, or an individual city directory. Keep the original and masked panoramas and both metric-depth directories unchanged.
+
+**Return to the code root and check the 16 corrected lists** before evaluation. Continue in the same Bash shell so `DATA_PARENT` still names the location chosen above:
+
+```bash
+cd /absolute/path/to/BevSplat
+export VIGOR_ROOT="$DATA_PARENT/VIGOR"
+LABEL_SUMS="$PWD/configs/vigor-labels.sha256"
+(cd "$VIGOR_ROOT" && sha256sum -c "$LABEL_SUMS")
+```
+
+4. **Configure and run the four tests.** Complete [section 3](#3-configure-paths-and-dependencies), keeping `VIGOR_ROOT` set to that restored root. In [section 4](#4-download-weights-and-evaluate), download all four weights from OneDrive's `corrected-e2-fresh15-20261027` folder, set `CHECKPOINT_DIR` to their directory, and run the complete evaluation block from the repository root. The data folder's `SHA256SUMS` checks archive volumes; the repository's `checkpoints/SHA256SUMS` checks the four localization weights. Keep the five constructor assets in their separately documented caches.
+5. **Compare official-test outputs with [section 6](#6-results-and-verification)** or `configs/reproduction-reference.json` (identical to the download's `EXPECTED_RESULTS.json`). Same-Area tests contain **52605** samples and Cross-Area tests **53694**. Each area/GPS pair needs its matching weight and a distinct output name. Keep `corrected`/`crop`, `rotation_range=0`, and all explicit evaluation options; CLI compatibility defaults do not select this protocol automatically. Internal validation is a separate split.
+
+This route uses the preserved author corpus and released weights. It does not require regenerating sky/depth inputs or retraining; the separate clean-machine and training-from-scratch limits in [section 6](#6-results-and-verification) still apply.
+
 ## 1. Required files
 
 See the [VIGOR file inventory](../docs/reproduction-files.md#vigor-inputs) and [public initialization assets](../docs/public-dependencies.md). You need original satellite/panorama images, **matching corrected lists**, sky-masked panorama JPEGs, protocol-specific metric NPYs, all model-construction assets and the matching final localization checkpoint. `sky_mask/` files are optional diagnostic masks, not loader inputs. The historical corpus may contain JPEG masks; the current generator writes PNG masks.
