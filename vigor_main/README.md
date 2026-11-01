@@ -6,7 +6,7 @@ This guide covers the four current 15-epoch VIGOR models: Same/Cross-Area × GPS
 
 ## Quick start: evaluate the released VIGOR models
 
-Use the prepared download below to reproduce the four **official-test** rows in [section 6](#6-results-and-verification). You can use VIGOR independently while the KITTI data upload continues. Follow this route in one Bash shell; preprocessing and localization training are optional alternatives, not prerequisites for evaluating the released weights.
+Use the prepared download below to reproduce the four **official-test** rows in [section 6](#6-results-and-verification). The VIGOR download and evaluation route are independently usable. Follow this route in one Bash shell; preprocessing and localization training are optional alternatives, not prerequisites for evaluating the released weights.
 
 1. **Install the localization environment and constructor assets.** Follow [shared installation](../README.md#install-the-environment), then [public initialization dependencies](../docs/public-dependencies.md), including all five checked model assets. These are required before loading the four final localization weights.
 2. **Download the complete [prepared VIGOR folder](https://drive.google.com/drive/folders/1TVEwjSp-FFWL-c6hh-bMbrKgcCvX4c8Q).** Keep its `parts/` directory with all **65** volumes (`0000`–`0064`) and the seven metadata files beside it: `SHA256SUMS`, `MD5SUMS`, `volumes.tsv`, `source.paths.txt`, `RESTORE_DATASETS.txt`, `EXPECTED_RESULTS.json`, and `METADATA_SHA256SUMS`. The parts total **275792716549 bytes** (275.8 GB); restored logical source is about **387.2 GB**. Reserve space for both if retaining the download, plus the environment, assets, weights and outputs. Actual allocated disk space can differ.

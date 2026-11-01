@@ -10,6 +10,36 @@ The two released checkpoints have been successfully evaluated on the preserved h
 
 Use the [KITTI inventory](../docs/reproduction-files.md#kitti-inputs) for the exact paths and role of every file. Both GPS settings require raw left-camera RGB, satellite tiles, date-level calibration, OXTS, masked RGB and metric depth, plus the fixed split lists. Download both historical localization checkpoints for all four model/split evaluations. Stage0 `model_4.pth` is needed only when training Stage1 with a nonzero heading range; it is not required for the evaluation-only path.
 
+### Prepared-data evaluation quickstart
+
+[Download the complete prepared KITTI folder](https://drive.google.com/drive/folders/1jYinXNmEzcUO3JBiAHtrlF9AUOtljc2v). Its **164** ordered volumes preserve the author's historical RGB, masked RGB/depth and auxiliary inputs, with **701502773645 compressed bytes / 1288417 members including directories**. Download the entire folder and retain `parts/` and all metadata. Follow the [file roles and storage requirements](../docs/reproduction-files.md#prepared-dataset-downloads). The identity package covers only the fixed default-list inputs; download it for metadata validation, while its extraction is optional.
+
+Use Linux with Bash, GNU coreutils, gzip and GNU tar. KITTI's `METADATA_SHA256SUMS` has SHA256 `4cc16cfa9061333008de6fde42119b2e3f7ed2d8b5950c749abfebfb947a4f7d`. Choose a new data parent and restore:
+
+```bash
+set -euo pipefail
+export LC_ALL=C
+ARCHIVE_DIR=/absolute/path/to/downloaded/KITTI
+DATA_PARENT=/absolute/path/to/new/data-parent
+mkdir -p "$DATA_PARENT"
+cd "$ARCHIVE_DIR"
+sha256sum -c METADATA_SHA256SUMS
+(cd parts && sha256sum -c ../SHA256SUMS)
+test ! -e "$DATA_PARENT/KITTI"
+while IFS=$'\t' read -r PART BYTES MODTIME; do
+  cat -- "parts/$PART"
+done < volumes.tsv | gzip -dc | tar --acls --xattrs --no-same-owner -xpf - -C "$DATA_PARENT"
+```
+
+Return explicitly to the **BevSplat code root** before verifying the three fixed lists or running the Python modules:
+
+```bash
+cd /absolute/path/to/BevSplat
+sha256sum -c configs/kitti-labels.sha256
+```
+
+Complete [path and dependency setup](#3-configure-paths-and-dependencies), including the actual loader `root_dir`, writable `CKPT_ROOT`, constructed model assets and KITTI Torch Hub/cache requirements. Then run [the existing two-checkpoint evaluation block](#4-download-weights-and-evaluate), with both checkpoint SHA256 checks and native R10 settings, and compare [the recorded results](#6-results-and-verification). Each GPS setting evaluates both test1 and test2. Skip section 2 regeneration and section 5 training when using these prepared inputs and released weights; evaluation does not need a separate Stage0 checkpoint.
+
 ## 2. Prepare the data
 
 Obtain the KITTI raw drives and satellite tiles following [Loc² datasets](https://github.com/vita-epfl/Loc2#datasets) and [HighlyAccurate](https://github.com/YujiaoShi/HighlyAccurate). Keep the repository's fixed split files unchanged. `train_files.txt` has 19655 rows, test1 has 3773 and test2 has 7542. Test rows include the prescribed shift/heading values; do not replace them with path-only lists.
@@ -182,6 +212,6 @@ Both released weights have been successfully reproduced on the author's stored K
 
 Strict heading error <1° is 99.89% for test1 and 100% for test2 for both weights. The [machine-readable references](../configs/reproduction-reference.json) include all 20 metrics and exact checkpoint identities. Test1 retains all 3773 prescribed rows, including repeated frames with prescribed perturbations; do not deduplicate it.
 
-The default train/test input closure has also been SHA256-inventoried: 152880 files / 116563396853 bytes across original RGB, historical masked RGB, masked metric PT, satellite tiles, OXTS and calibration. This is the set read by the fixed-list loaders, not every auxiliary file in the full KITTI directory. Its manifest will accompany the prepared-data archive.
+The default train/test input closure has also been SHA256-inventoried: 152880 files / 116563396853 bytes across original RGB, historical masked RGB, masked metric PT, satellite tiles, OXTS and calibration. This is the set read by the fixed-list loaders, not every auxiliary file in the full KITTI directory. Its identity package is included in the prepared download above; it is separate from the full archive-volume checksums.
 
 These results use the existing 4090 environment and preserved historical inputs. A three-frame V1/V2/RGB rerun produced close but nonidentical inputs, so use the prepared historical files to reproduce the recorded scores. A complete raw-data rebuild and clean-machine installation are separate from this successful released-weight evaluation.
