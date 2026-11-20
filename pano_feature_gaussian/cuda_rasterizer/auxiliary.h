@@ -12,6 +12,22 @@
 #ifndef CUDA_RASTERIZER_AUXILIARY_H_INCLUDED
 #define CUDA_RASTERIZER_AUXILIARY_H_INCLUDED
 
+#ifdef _WIN32
+#ifndef _USE_MATH_DEFINES
+#define _USE_MATH_DEFINES
+#endif
+#include <cmath>
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+#ifndef M_1_PI
+#define M_1_PI 0.318309886183790671538
+#endif
+#ifndef M_1_PIf32
+#define M_1_PIf32 0.31830988618379067f
+#endif
+#endif
+
 #include "config.h"
 #include "stdio.h"
 
