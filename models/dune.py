@@ -1,3 +1,4 @@
+from pathlib import Path
 import torch
 import einops as E
 import torch.nn.functional as F
@@ -5,6 +6,8 @@ import timm
 from timm import create_model
 import numpy as np
 import types
+
+from models.public_pretrained import load_hub_model
 
 def center_padding(images, patch_size):
     """
@@ -130,7 +133,12 @@ class DINO(torch.nn.Module):
         self.model_name = dino_name
         self.checkpoint_name = f"{dino_name}_{model_name}"
         
-        dino_vit = torch.hub.load("/home/qiwei/.cache/torch/hub/naver_dune_main", "dune_vitbase_14_448_paper_encoder", source='local')
+        dino_vit = load_hub_model(
+            str(Path(torch.hub.get_dir()) / "naver_dune_main"),
+            "dune_vitbase_14_448_paper_encoder",
+            env_var="BEVSPLAT_DUNE_REPO",
+            source="local",
+        )
 
         self.vit = dino_vit.eval().to(torch.float32)
         assert output in ["cls", "gap", "dense", "dense-cls"]

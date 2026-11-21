@@ -622,6 +622,8 @@ class TransOptimizerS2GP_V1(nn.Module):
             x = self.level_2(r)
         elif C == 64:
             x = self.level_1(r)
+        else:
+            raise ValueError(f"unsupported feature channels: {C}")
        
         return x # [B, 3]
         
@@ -666,15 +668,17 @@ class TransOptimizerG2SP_V1(nn.Module):
         r = pred_feat - ref_feat  # [B, C, H, W]
         B, C, _, _ = r.shape
 
-        # if level == 0:
-        #     x = self.level_4(r)
-        if level == 1:
+        if level == 0:
+            x = self.level_4(r)
+        elif level == 1:
             x = self.level_2(r)
         elif level == 2:
             x = self.level_1(r)
-        elif level == 3:
+        elif level == 3 and hasattr(self, "level_0"):
             x = self.level_0(r)
-       
+        else:
+            raise ValueError(f"unsupported level: {level}")
+
         return x # [B, 3]
 
 
@@ -713,6 +717,8 @@ class TransOptimizerG2SP_V2(nn.Module):
             x = self.level_2(r)
         elif C == 64:
             x = self.level_1(r)
+        else:
+            raise ValueError(f"unsupported feature channels: {C}")
 
         return x  # [B, 3]
 
